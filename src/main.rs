@@ -51,9 +51,11 @@ async fn create_sanctuary(State(app): State<App>, ConnectInfo(addr): ConnectInfo
     if secret.len() != 16 { return (StatusCode::BAD_REQUEST, empty, Json(serde_json::json!({"error":"host_secret must be 16 bytes (128-bit)"}))); }
     if let Some(pw) = &r.password { if pw.len() < 4 || pw.len() > 32 || !pw.bytes().all(|b| (0x20..=0x7e).contains(&b)) { return (StatusCode::BAD_REQUEST, empty, Json(serde_json::json!({"error":"password must be 4-32 ASCII characters"}))); } }
     // one sanctuary per creator cookie: a known cookie returns its existing sanctuary
+    // only when the request carries the same secret; a new secret is a new sanctuary
+    let req_id = derive_id(&secret);
     if let Some(tok) = cookie_token(&headers) {
         if let Some(id) = app.creators.get(&tok).map(|v| *v) {
-            if app.store.contains_key(&id) {
+            if id == req_id && app.store.contains_key(&id) {
                 let mut hm = HeaderMap::new(); hm.insert(header::SET_COOKIE, format!("wispn_creator={tok}; Path=/; Max-Age=31536000; SameSite=Lax").parse().unwrap());
                 return (StatusCode::OK, hm, Json(serde_json::json!({"id": format!("{id:016x}"), "existing": true})));
             }
@@ -65,7 +67,7 @@ async fn create_sanctuary(State(app): State<App>, ConnectInfo(addr): ConnectInfo
     let id = derive_id(&secret);
     let fresh = !app.store.contains_key(&id);
     app.store.entry(id).or_insert_with(|| Sanctuary { last_active: now(), env_id: r.env_id.min(5), host_ghost: r.host_ghost, souls: VecDeque::new(), colors: Default::default(), password_hash: r.password.as_ref().map(|pw| blake3::hash(pw.as_bytes()).to_hex().to_string()), host_secret: secret.clone() });
-    if let Some(mut s) = app.store.get_mut(&id) { s.last_active = now(); s.env_id = r.env_id.min(5); if r.host_ghost != [0; 7] { s.host_ghost = r.host_ghost; } }
+    if let Some(mut s) = app.store.get_mut(&id) { s.last_active = now(); s.env_id = r.env_id.min(5); if r.host_ghost != [0; 7] { s.host_ghost = r.host_ghost; } if s.password_hash.is_none() { if let Some(pw) = &r.password { s.password_hash = Some(blake3::hash(pw.as_bytes()).to_hex().to_string()); } } }
     if fresh { *app.ips.entry(ip).or_insert(0) += 1; }
     let tok = cookie_token(&headers).unwrap_or_else(|| to_hex(&blake3::hash(&[secret.as_slice(), b"creator"].concat()).as_bytes()[0..16]));
     app.creators.insert(tok.clone(), id);

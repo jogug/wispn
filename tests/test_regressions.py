@@ -46,9 +46,26 @@ try:
     s, b, _ = raw("POST", f"/api/s/{sid2}/unlock", {"password": "rose-1234"}); assert s == 200 and json.loads(b)["host_secret"] == sec2, "right password must return host secret"
     print("password lock and unlock PASS")
     # same creator cookie returns the existing sanctuary instead of a new one
-    s, b, _ = raw("POST", "/api/sanctuaries", {"host_secret": "00001111222233334444555566667777"}, headers={"Cookie": cookie})
-    assert json.loads(b)["id"] == sid2, "creator cookie must return its existing sanctuary"
+    s, b, _ = raw("POST", "/api/sanctuaries", {"host_secret": sec2}, headers={"Cookie": cookie})
+    assert json.loads(b)["id"] == sid2, "creator cookie with the same secret must return its existing sanctuary"
     print("one sanctuary per creator cookie PASS")
+    # a new secret with an old creator cookie must create its own locked sanctuary, not reuse the old one
+    sec3 = "3333444455556666777788889999aaaa"
+    s, b, _ = raw("POST", "/api/sanctuaries", {"host_secret": sec3, "password": "new-pass-9"}, headers={"Cookie": cookie})
+    sid3 = json.loads(b)["id"]
+    assert sid3 != sid2, "new secret must not be hijacked by an old creator cookie"
+    s, b, _ = raw("GET", f"/api/s/{sid3}/meta"); assert json.loads(b)["locked"] is True, "new sanctuary must carry its password"
+    s, b, _ = raw("POST", f"/api/s/{sid3}/unlock", {"password": "new-pass-9"}); assert s == 200, "unlock must work on the new sanctuary"
+    print("cookie no-hijack, password on new sanctuary PASS")
+    # re-creating an unlocked sanctuary with its secret plus a password locks it
+    sec4 = "444455556666777788889999aaaabbbb"
+    s, b, _ = raw("POST", "/api/sanctuaries", {"host_secret": sec4})
+    sid4 = json.loads(b)["id"]
+    s, b, _ = raw("GET", f"/api/s/{sid4}/meta"); assert json.loads(b)["locked"] is False
+    s, b, _ = raw("POST", "/api/sanctuaries", {"host_secret": sec4, "password": "later-pass-7"})
+    s, b, _ = raw("GET", f"/api/s/{sid4}/meta"); assert json.loads(b)["locked"] is True, "re-create with password must lock an unlocked sanctuary"
+    print("password set on re-create PASS")
+
     # bad passwords are rejected at create
     s, b, _ = raw("POST", "/api/sanctuaries", {"host_secret": "11112222333344445555666677778888", "password": "ab"})
     assert s == 400, "short password must 400"
