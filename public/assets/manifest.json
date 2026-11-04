@@ -8,14 +8,149 @@
     "beach"
   ],
   "bodies": 5,
-  "eyes": 5,
+  "eyes": [
+    {
+      "file": "assets/ghost/eyes/0.svg",
+      "viewBox": "64x32",
+      "center": [
+        32,
+        16
+      ]
+    },
+    {
+      "file": "assets/ghost/eyes/1.svg",
+      "viewBox": "64x32",
+      "center": [
+        32,
+        16
+      ]
+    },
+    {
+      "file": "assets/ghost/eyes/2.svg",
+      "viewBox": "64x32",
+      "center": [
+        32,
+        16
+      ]
+    },
+    {
+      "file": "assets/ghost/eyes/3.svg",
+      "viewBox": "64x32",
+      "center": [
+        32,
+        16
+      ]
+    },
+    {
+      "file": "assets/ghost/eyes/4.svg",
+      "viewBox": "64x32",
+      "center": [
+        32,
+        16
+      ]
+    }
+  ],
   "hands": 3,
-  "items": 5,
+  "items": [
+    {
+      "file": "assets/ghost/items/0.svg",
+      "pivotX": 50,
+      "pivotY": 50,
+      "dangles": false,
+      "glowColor": "#fda4af"
+    },
+    {
+      "file": "assets/ghost/items/1.svg",
+      "pivotX": 50,
+      "pivotY": 50,
+      "dangles": false,
+      "glowColor": "#fde68a"
+    },
+    {
+      "file": "assets/ghost/items/2.svg",
+      "pivotX": 50,
+      "pivotY": 50,
+      "dangles": false,
+      "glowColor": "#fca5a5"
+    },
+    {
+      "file": "assets/ghost/items/3.svg",
+      "pivotX": 50,
+      "pivotY": 50,
+      "dangles": true,
+      "glowColor": "#93c5fd"
+    },
+    {
+      "file": "assets/ghost/items/4.svg",
+      "pivotX": 50,
+      "pivotY": 50,
+      "dangles": true,
+      "glowColor": "#fbbf24"
+    }
+  ],
+  "hats": [
+    {
+      "file": "assets/ghost/hats/0.svg",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/1.svg",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/2.svg",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/3.svg",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/4.svg",
+      "pivotX": 50,
+      "pivotY": 78
+    }
+  ],
+  "sockets": {
+    "Hat_Socket": {
+      "node": 0,
+      "offset": [
+        0,
+        -24
+      ]
+    },
+    "Eye_Socket": {
+      "node": 0,
+      "offset": [
+        0,
+        -4
+      ]
+    },
+    "Shoulder_L": {
+      "node": 1,
+      "offset": [
+        -20,
+        -2
+      ]
+    },
+    "Shoulder_R": {
+      "node": 1,
+      "offset": [
+        20,
+        -2
+      ]
+    }
+  },
   "paths": {
-    "environment": "css:.env-{i} (drop a {name}_bg.webp into assets/environments/ to override)",
     "body": "assets/ghost/bodies/{i}.svg",
     "eyes": "assets/ghost/eyes/{i}.svg",
     "hands": "assets/ghost/hands/{i}.svg",
-    "item": "assets/ghost/items/{i}.svg"
+    "hat": "assets/ghost/hats/{i}.svg",
+    "item": "assets/ghost/items/{i}.svg",
+    "environment": "css canvas planes; drop {name}_bg.webp into assets/environments/ to override"
   }
 }
