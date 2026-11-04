@@ -1,0 +1,23 @@
+*{box-sizing:border-box}body{margin:0;font-family:system-ui;background:#111;color:#eee}
+header{display:flex;gap:.5rem;align-items:center;padding:.6rem 1rem}.logo{color:#fff;text-decoration:none;font-weight:700;font-size:1.3rem}
+.badge{background:#333;border-radius:1rem;padding:.15rem .6rem}.badge.host{background:#14532d;color:#dcfce7}
+button{cursor:pointer;border-radius:.6rem;border:1px solid #555;background:#222;color:#eee;padding:.45rem .8rem}
+#stage{position:relative;min-height:62vh;overflow:hidden;border-block:1px solid #333}
+.env-0{background:linear-gradient(#0b2e1a,#14532d)}.env-1{background:linear-gradient(#fef9c3,#bae6fd)}
+.env-2{background:linear-gradient(#082f49,#0369a1)}.env-3{background:linear-gradient(#713f12,#d97706)}
+.env-4{background:linear-gradient(#1e293b,#64748b)}.env-5{background:linear-gradient(#0ea5e9,#fde68a)}
+#particles i{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffffff88;animation:drift 7s linear infinite}
+@keyframes drift{from{transform:translateY(60vh)}to{transform:translateY(-4vh)}}
+#ghosts,#hostGhost{display:flex;flex-wrap:wrap;gap:1rem;padding:1rem}
+.ghost{width:84px;text-align:center;cursor:pointer}.ghost .body{font-size:3rem;line-height:1;position:relative}
+.ghost .react{font-size:1.4rem;min-height:1.6rem}.ghost small{opacity:.7}
+@keyframes mime-0{0%,100%{transform:translateY(0) scale(.92)}50%{transform:translateY(2px) scale(1)}} /* Shy Peek */
+@keyframes mime-1{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px) rotate(-6deg)}} /* Happy Hop */
+@keyframes mime-2{0%,100%{transform:translateX(-8px) rotate(-4deg)}50%{transform:translateX(8px) rotate(4deg)}} /* Slow Sway */
+@keyframes mime-3{0%,100%{transform:scale(1)}50%{transform:scale(1.25) rotate(8deg)}} /* Curious Tilt */
+@keyframes mime-4{0%,100%{transform:translateY(0)}50%{transform:translateY(8px) scaleY(.9)}} /* Offering Bow */
+@keyframes mime-5{from{transform:rotate(0)}to{transform:rotate(360deg)}} /* Dizzy Spin */
+@keyframes mime-6{0%,100%{transform:scale(1)}50%{transform:scale(.78)}} /* Shiver */
+@keyframes mime-7{0%{transform:translate(0,0)}25%{transform:translate(14px,-10px)}50%{transform:translate(0,-18px)}75%{transform:translate(-14px,-10px)}100%{transform:translate(0,0)}} /* Orbit */
+#drawer{padding:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}#radial{position:fixed;inset:auto 1rem 5rem auto;background:#222;border:1px solid #555;border-radius:1rem;padding:.6rem;z-index:9}
+#toast{padding:.6rem 1rem;min-height:1.4rem;color:#a7f3d0}

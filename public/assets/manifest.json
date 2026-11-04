@@ -1,0 +1,21 @@
+{
+  "environments": [
+    "forest",
+    "heaven",
+    "sea",
+    "dunes",
+    "mountain",
+    "beach"
+  ],
+  "bodies": 5,
+  "eyes": 5,
+  "hands": 3,
+  "items": 5,
+  "paths": {
+    "environment": "css:.env-{i} (drop a {name}_bg.webp into assets/environments/ to override)",
+    "body": "assets/ghost/bodies/{i}.svg",
+    "eyes": "assets/ghost/eyes/{i}.svg",
+    "hands": "assets/ghost/hands/{i}.svg",
+    "item": "assets/ghost/items/{i}.svg"
+  }
+}

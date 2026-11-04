@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>wispn — ghost-mime sanctuary</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><a class="logo" href="#">👻 wispn</a><span id="roleBadge" class="badge">visitor</span>
+<button id="shareBtn">Share</button><button id="openBtn">Open Sanctuary</button></header>
+<main id="stage" class="env-0"><div id="particles"></div><div id="hostGhost"></div><div id="ghosts"></div>
+<p id="empty">No sanctuary yet. Open one, or paste a link with <code>#&lt;id&gt;</code>.</p></main>
+<section id="hostBar" hidden><label>Environment <select id="envSel"><option value="0">Forest</option><option value="1">Heaven</option><option value="2">Sea</option><option value="3">Dunes</option><option value="4">Mountain</option><option value="5">Beach</option></select></label></section>
+<button id="summonBtn">✨ Summon your ghost</button>
+<aside id="drawer" hidden><h2>Summon your ghost</h2>
+<label>Tint <select id="fTint"></select></label><label>Eyes <select id="fEyes"></select></label>
+<label>Item <select id="fItem"></select></label><label>Hat <select id="fHat"></select></label>
+<label>Tempo <input id="fTempo" type="range" min="0" max="3" value="1"></label>
+<fieldset><legend>3-beat mime loop</legend><select id="fBeat0"></select><select id="fBeat1"></select><select id="fBeat2"></select></fieldset>
+<button id="doSummon">Summon</button><button id="closeDrawer">Close</button></aside>
+<div id="radial" hidden></div><div id="toast"></div>
+<script src="/app.js"></script></body></html>
