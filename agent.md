@@ -292,3 +292,13 @@ Idle wisps now wander. After 5 to 16 idle seconds a wisp flies off on an eased a
 The bottom bar is wordless: Share, New Sanctuary, and Enter Limbo are inline SVG icons (share nodes, plus-in-circle, ghost) with aria-labels and tooltips.
 
 The host is no longer drawn in the world and cannot be dragged or tapped; the host acts through the orb wheel only. Guest mode: when your stored visitor ID appears in another sanctuary's souls, the app loads that soul as your ghost (gold marker dot, badge reads guest), and both Enter Limbo and New Sanctuary are disabled with explanatory toasts, so a guest cannot dress or create from inside someone else's sanctuary. Verified with a DOM probe: guest=true, both buttons disabled, badge guest, own wisp flagged.
+
+## 15. Tinted trails, one-sanctuary lock, wordless controls, audio, passwords (latest)
+
+Flight sparkles now take the wisp's own tint (custom body colour or nearest preset), drift gently upward with a slow fade, twinkle as small stars a third of the time, and emit from random points across all five body nodes instead of only the tail tip.
+
+One sanctuary per person: creating sets a `wispn_creator` cookie, and a create call carrying a known cookie returns that cookie's existing sanctuary instead of minting another. Creations are also capped at 30 per IP (429 beyond). When you already own a sanctuary elsewhere, the create button switches to a wordless visit icon (door-and-arrow) that jumps to it; guests visiting someone else still see the create button so they can start their own. Save and Close in Limbo are now check and X icons, and the eye, hat, and item cards show previews only with names moved to tooltips (the mime-gesture cards keep their names, as the moves have no icon form).
+
+Audio is a tiny WebAudio synth, no assets: a two-note pop on tap, a rising sweep on flight, a four-note chime on reactions and on save, a soft blip on the orb wheel and bar buttons. The context only starts after the first pointer press.
+
+Sanctuary passwords: creating a sanctuary requires a password, checked on the frontend as 4-32 ASCII characters (server validates the same) and stored only as a BLAKE3 hash. Opening a locked sanctuary while neither host nor guest shows an unlock gate; the right password returns the host secret for this device, the eye button just visits. There is no reset path, by design. A global `[hidden]` rule now guarantees hidden fields actually hide, which also fixed the environment selector leaking to visitors.
