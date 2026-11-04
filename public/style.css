@@ -3,21 +3,36 @@ header{display:flex;gap:.5rem;align-items:center;padding:.6rem 1rem}.logo{color:
 .badge{background:#333;border-radius:1rem;padding:.15rem .6rem}.badge.host{background:#14532d;color:#dcfce7}
 button{cursor:pointer;border-radius:.6rem;border:1px solid #555;background:#222;color:#eee;padding:.45rem .8rem}
 #stage{position:relative;min-height:62vh;overflow:hidden;border-block:1px solid #333}
-.env-0{background:linear-gradient(#0b2e1a,#14532d)}.env-1{background:linear-gradient(#fef9c3,#bae6fd)}
-.env-2{background:linear-gradient(#082f49,#0369a1)}.env-3{background:linear-gradient(#713f12,#d97706)}
-.env-4{background:linear-gradient(#1e293b,#64748b)}.env-5{background:linear-gradient(#0ea5e9,#fde68a)}
-#particles i{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffffff88;animation:drift 7s linear infinite}
+.env-0{background:linear-gradient(180deg,#04150c 0%,#0b2e1a 45%,#14532d 80%,#052e16 100%)}
+.env-1{background:linear-gradient(180deg,#fff7cc 0%,#fef9c3 35%,#e0f2fe 75%,#bae6fd 100%)}
+.env-2{background:linear-gradient(180deg,#0c4a6e 0%,#082f49 40%,#0369a1 78%,#075985 100%)}
+.env-3{background:linear-gradient(180deg,#451a03 0%,#713f12 38%,#b45309 72%,#d97706 100%)}
+.env-4{background:linear-gradient(180deg,#020617 0%,#1e293b 42%,#475569 78%,#64748b 100%)}
+.env-5{background:linear-gradient(180deg,#38bdf8 0%,#0ea5e9 42%,#fbbf24 82%,#fde68a 100%)}
+#particles i{position:absolute;border-radius:50%;pointer-events:none;animation:drift 7s linear infinite}
+.env-0 #particles i{width:5px;height:5px;background:#bbf7d0;box-shadow:0 0 8px 2px #4ade80;animation-name:firefly;animation-duration:5s}
+.env-1 #particles i{width:7px;height:7px;background:#fefce8;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation-name:sparkle;animation-duration:4s}
+.env-2 #particles i{width:9px;height:9px;background:transparent;border:1.5px solid #bae6fd;animation-name:bubble;animation-duration:6s}
+.env-3 #particles i{width:4px;height:4px;background:#fde68a;animation-name:dust;animation-duration:9s}
+.env-4 #particles i{width:6px;height:6px;background:#f8fafc;animation-name:snow;animation-duration:8s}
+.env-5 #particles i{width:5px;height:5px;background:#fef08a;animation-name:sunmote;animation-duration:6.5s}
 @keyframes drift{from{transform:translateY(60vh)}to{transform:translateY(-4vh)}}
+@keyframes firefly{0%,100%{transform:translate(0,60vh);opacity:.2}25%{transform:translate(14px,38vh);opacity:1}50%{transform:translate(-10px,20vh);opacity:.4}75%{transform:translate(8px,6vh);opacity:1}}
+@keyframes sparkle{0%,100%{transform:translateY(55vh) rotate(0) scale(.6);opacity:.3}50%{transform:translateY(18vh) rotate(180deg) scale(1.15);opacity:1}}
+@keyframes bubble{from{transform:translate(0,58vh)}25%{transform:translate(8px,40vh)}50%{transform:translate(-8px,24vh)}to{transform:translate(4px,-4vh)}}
+@keyframes dust{from{transform:translate(-6vw,52vh)}to{transform:translate(92vw,-2vh)}}
+@keyframes snow{from{transform:translate(0,-4vh)}25%{transform:translate(12px,14vh)}50%{transform:translate(-10px,30vh)}to{transform:translate(6px,60vh)}}
+@keyframes sunmote{0%,100%{transform:translate(0,50vh);opacity:.35}50%{transform:translate(18px,12vh);opacity:.95}}
 #ghosts,#hostGhost{display:flex;flex-wrap:wrap;gap:1rem;padding:1rem}
 .ghost{width:84px;text-align:center;cursor:pointer}.ghost .body{position:relative;width:84px;height:84px}.ghost .layer{position:absolute;inset:0;width:84px;height:84px}.ghost .layer.item{inset:auto 0 0 auto;width:34px;height:34px}.ghost .hat{position:absolute;top:-8px;left:0;right:0;font-size:1.3rem}
 .ghost .react{font-size:1.4rem;min-height:1.6rem}.ghost small{opacity:.7}
-@keyframes mime-0{0%,100%{transform:translateY(0) scale(.92)}50%{transform:translateY(2px) scale(1)}} /* Shy Peek */
-@keyframes mime-1{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px) rotate(-6deg)}} /* Happy Hop */
-@keyframes mime-2{0%,100%{transform:translateX(-8px) rotate(-4deg)}50%{transform:translateX(8px) rotate(4deg)}} /* Slow Sway */
-@keyframes mime-3{0%,100%{transform:scale(1)}50%{transform:scale(1.25) rotate(8deg)}} /* Curious Tilt */
-@keyframes mime-4{0%,100%{transform:translateY(0)}50%{transform:translateY(8px) scaleY(.9)}} /* Offering Bow */
-@keyframes mime-5{from{transform:rotate(0)}to{transform:rotate(360deg)}} /* Dizzy Spin */
-@keyframes mime-6{0%,100%{transform:scale(1)}50%{transform:scale(.78)}} /* Shiver */
-@keyframes mime-7{0%{transform:translate(0,0)}25%{transform:translate(14px,-10px)}50%{transform:translate(0,-18px)}75%{transform:translate(-14px,-10px)}100%{transform:translate(0,0)}} /* Orbit */
+@keyframes mime-0{0%,100%{transform:translateY(6px) scale(.88)}30%{transform:translateY(0) scale(1)}45%{transform:translateY(2px) scale(.94) rotate(-3deg)}60%{transform:translateY(0) scale(1)}80%{transform:translateY(4px) scale(.9)}} /* Shy Peek. Crouch, rise, half-hide again. */
+@keyframes mime-1{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-18px) rotate(-7deg)}45%{transform:translateY(0) rotate(5deg)}60%{transform:translateY(-11px) rotate(-4deg)}75%{transform:translateY(0)}} /* Happy Hop. Two bounces with a wave tilt. */
+@keyframes mime-2{0%,100%{transform:translateX(-10px) rotate(-5deg)}50%{transform:translateX(10px) rotate(5deg)}} /* Slow Sway. Side-to-side drift. */
+@keyframes mime-3{0%,100%{transform:scale(1) rotate(0)}35%{transform:scale(1.18) rotate(9deg)}55%{transform:scale(1.28) rotate(11deg)}75%{transform:scale(1.12) rotate(6deg)}} /* Curious Tilt. Leans in close. */
+@keyframes mime-4{0%,100%{transform:translateY(0) scaleY(1)}40%{transform:translateY(7px) scaleY(.88)}60%{transform:translateY(10px) scaleY(.84)}80%{transform:translateY(4px) scaleY(.94)}} /* Offering Bow. Deepens then rises. */
+@keyframes mime-5{0%{transform:rotate(0) scale(1)}30%{transform:rotate(150deg) scale(1.06)}60%{transform:rotate(280deg) scale(.94)}100%{transform:rotate(360deg) scale(1)}} /* Dizzy Spin. Full twirl with wobble. */
+@keyframes mime-6{0%,100%{transform:scale(1)}20%{transform:scale(.82) translateX(-2px)}40%{transform:scale(.78) translateX(2px)}60%{transform:scale(.8) translateX(-2px)}80%{transform:scale(.86) translateX(1px)}} /* Shiver. Huddles inward and trembles. */
+@keyframes mime-7{0%{transform:translate(0,0)}20%{transform:translate(16px,-8px)}40%{transform:translate(10px,-20px)}60%{transform:translate(-8px,-18px)}80%{transform:translate(-16px,-6px)}100%{transform:translate(0,0)}} /* Orbit Dance. Circles the room. */
 #drawer{padding:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}#radial{position:fixed;inset:auto 1rem 5rem auto;background:#222;border:1px solid #555;border-radius:1rem;padding:.6rem;z-index:9}
 #toast{padding:.6rem 1rem;min-height:1.4rem;color:#a7f3d0}
