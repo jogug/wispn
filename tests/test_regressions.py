@@ -135,4 +135,6 @@ assert "faceTexCache=new Map()" in js or "faceTexCache = new Map()" in js or "ne
 assert "ICON_HOME" in js and 'mode="home"' in js.replace("dataset.mode=","mode="), "guests must get a return-home button"
 assert "loadBusy" in js, "concurrent loads must be serialised"
 print("accessories persist, face cache, guest home, load dedupe PASS")
+assert "pp.souls.find" in js and "CUST.item=(mine.item_and_hat>>4)%6" in js, "guest join must copy accessories from the home ghost"
+print("guest accessories from home ghost PASS")
 print("ALL PASS")
