@@ -1,10 +1,10 @@
 const MIMES=["Shy Peek","Happy Hop","Slow Sway","Curious Tilt","Offering Bow","Joyful Twirl","Cozy Huddle","Playful Orbit"];
 const TINTS=["#f8fafc","#fda4af","#93c5fd","#86efac","#fde68a"],EYE_NAMES=["Soft Wonder","Happy Arc","Wide Curious","Peaceful Slumber","Cozy Starry"],ITEMS=["","🌸","⭐","🍄","🔮","🕯️"],HATS=["","🎩","🌿","👑","🧢","🌙"],HAIR_STYLES=["None","Tuft","Bob","Long flow","Spiky","Bun"],ARM_GESTURES=["Auto (mime)","Spooky wave","Hug","Chuckle","Offering","Droop"],HAIR_COLORS=["#fef9c3","#fda4af","#93c5fd","#4ade80","#1f2937"];
-const SEG=[14,15,16,16],RAD=[26,28,25,20,12],ENV_WIND=[.12,.05,.3,.8,.5,.35],ENV_DAMP=[.90,.94,.84,.92,.9,.88],PART_N=[45,50,60,70,80,55];
+const SEG=[9,10,11,11],RAD=[28,31,28,23,14],ENV_WIND=[.12,.05,.3,.8,.5,.35],ENV_DAMP=[.90,.94,.84,.92,.9,.88],PART_N=[45,50,60,70,80,55];
 const $=s=>document.querySelector(s),stage=$("#stage"),canvas=$("#world");let ctx=canvas.getContext("2d");
 const CUST={bodyColor:"#f8fafc",hairColor:"#fef9c3",hair:1,eyes:0,item:0,hat:0,gesture:0,mustache:false,beard:false};
 const HAIR_FILES=["tuft","bob","long","spiky","bun"];
-let bgImgs=[],sid=location.hash.slice(1)||null,souls=[],wisps=new Map(),hostWisp=null,beat=0,beatT=0,mouse={x:-999,y:-999},particles=[],pair=null,orbs=[],dragWisp=null,eyeImgs=[],itemImgs=[],hatImgs=[],fx=[],kelp=[],gust=0;
+let bgImgs=[],bgFar=[],bgFg=[],parX=0,parY=0,sid=location.hash.slice(1)||null,souls=[],wisps=new Map(),hostWisp=null,beat=0,beatT=0,mouse={x:-999,y:-999},particles=[],pair=null,orbs=[],dragWisp=null,eyeImgs=[],itemImgs=[],hatImgs=[],fx=[],kelp=[],gust=0;
 function toast(m){$("#toast").textContent=m}
 function visitorToken(){let t=localStorage.getItem("wispn_token");if(!t){t=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");localStorage.setItem("wispn_token",t)}return t}
 function myVid(){return +(localStorage.getItem("wispn_my_vid")||0)}
@@ -13,8 +13,8 @@ function isHost(){return !!hostSecret()}
 function decodePacket(buf){const b=new Uint8Array(buf);if(b.length<10)throw new Error("short packet");const out=[];for(let i=0;i<b[1];i++){const o=10+i*12,outv=new DataView(buf,o,12);out.push({visitor_id:outv.getUint32(0,true),appearance:b[o+4],item_and_hat:b[o+5],mime_seq:[b[o+6],b[o+7],b[o+8]],mime_tempo:b[o+9]&3,arm_gesture:(b[o+9]>>2)&7,facial:(b[o+9]>>5)&3,host_react:b[o+10],hair:b[o+11]})}return{env:b[0],hostGhost:[...b.slice(2,9)],souls:out}}
 function loadImgs(paths){return paths.map(p=>{const i=new Image();i.src=p;return i})}
 function makeWisp(soul,x,y,scale=1){return{soul,x,y,scale,nodes:Array.from({length:5},(_,i)=>({x,y:y+i*15,px:x,py:y+i*15})),hairPts:null,gaze:{x:0,y:0,tx:0,ty:0},blink:2+Math.random()*3,blinkPh:0,hatSpring:{y:0,v:0},pend:0,pendV:0,phase:Math.random()*7,rip:0}}
-function syncWisps(){const W=canvas.clientWidth,H=canvas.clientHeight;souls.forEach((s,i)=>{if(!wisps.has(s.visitor_id)){const x=60+(i%10)*(W-120)/9,y=90+Math.floor(i/10)*90;wisps.set(s.visitor_id,makeWisp(s,x,y))}else wisps.get(s.visitor_id).soul=s});for(const k of [...wisps.keys()])if(!souls.find(s=>s.visitor_id===k))wisps.delete(k);
- if(window._hostGhost){const hg={visitor_id:0,appearance:window._hostGhost[0],item_and_hat:window._hostGhost[1],mime_seq:window._hostGhost.slice(2,5),mime_tempo:window._hostGhost[5]&3,arm_gesture:0,facial:0,host_react:0,hair:0};if(!hostWisp)hostWisp=makeWisp(hg,W/2,110,1.15);hostWisp.soul=hg}}
+function syncWisps(){const W=canvas.clientWidth,H=canvas.clientHeight;souls.forEach((s,i)=>{if(!wisps.has(s.visitor_id)){const jx=((i*47)%29)-14,jy=((i*31)%23)-11,x=W*(0.1+(i%5)*0.19)+jx,y=H*(0.22+Math.floor(i/5)%4*0.19)+jy;wisps.set(s.visitor_id,makeWisp(s,x,y,1.32))}else wisps.get(s.visitor_id).soul=s});for(const k of [...wisps.keys()])if(!souls.find(s=>s.visitor_id===k))wisps.delete(k);
+ if(window._hostGhost){const hg={visitor_id:0,appearance:window._hostGhost[0],item_and_hat:window._hostGhost[1],mime_seq:window._hostGhost.slice(2,5),mime_tempo:window._hostGhost[5]&3,arm_gesture:0,facial:0,host_react:0,hair:0};if(!hostWisp)hostWisp=makeWisp(hg,W/2,130,1.5);hostWisp.soul=hg}}
 function ik(sx,sy,tx,ty,l1,l2,bend){const dx=tx-sx,dy=ty-sy;let d=Math.hypot(dx,dy);d=Math.min(d,l1+l2-.01);const a=Math.acos(Math.max(-1,Math.min(1,(l1*l1+d*d-l2*l2)/(2*l1*d)))),base=Math.atan2(dy,dx),ea=base+bend*a;return{ex:sx+Math.cos(ea)*l1,ey:sy+Math.sin(ea)*l1,hx:sx+Math.cos(base)*d,hy:sy+Math.sin(base)*d}}
 function poseForMime(w,t,m){const s=w.soul,ph=t*(0.9+s.mime_tempo*.45)+w.phase,sn=Math.sin(ph),cs=Math.cos(ph);const base={ox:0,oy:0,rot:0,sx:1,sy:1,seg:1,blush:.35,handL:[-24,18],handR:[24,18],headTilt:0};
  if(m===0)return{...base,oy:4-3*Math.max(0,sn),handL:[-7,-6],handR:[7,sn>0?-6:4],blush:sn>0?.75:.4,headTilt:-4*sn};
@@ -89,8 +89,12 @@ function drawHairAsset(w,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)r
  const n=w.nodes,k=w.scale,rig=w.rig||{headAngle:0};const long=style===3;
  if(behind!==long&&!(behind&&long)) { if(behind) return; }
  if(!behind&&long){/* front fringe handled below */}
- ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate(rig.headAngle+(w.pose?w.pose.headTilt||0:0)*Math.PI/180*.5);ctx.translate(0,w.hatSpring.y*.4);
- const W=(long?62:54)*k,H=(long?52:38)*k;ctx.drawImage(img,-W/2,-H*.72,W,H);ctx.restore()}
+ if(!w.hairSpring)w.hairSpring={r:0,v:0};
+ const hs=w.hairSpring,headVx=n[0].x-(w._lastHx??n[0].x);w._lastHx=n[0].x;
+ hs.v+=((-headVx*.012)-hs.r*130-hs.v*9)*.016;hs.r+=hs.v*.016;
+ const sway=hs.r+Math.sin(performance.now()*.0022+w.phase)*.045,bobY=Math.sin(performance.now()*.003+w.phase)*1.6*k;
+ ctx.save();ctx.translate(n[0].x,n[0].y+bobY);ctx.rotate(rig.headAngle+(w.pose?w.pose.headTilt||0:0)*Math.PI/180*.5+sway);ctx.translate(0,w.hatSpring.y*.4);
+ const W=(long?76:64)*k,H=W*img.height/img.width;ctx.drawImage(img,-W/2,long?-H*.72:-H*.84,W,H);ctx.restore()}
 function drawFacialHair(w){const s=w.soul,f=s.facial||0;if(!f)return;const color=s.hairColor||HAIR_COLORS[((s.hair||0)>>4)%5],colIdx=((s.hair||0)>>4)%5,n=w.nodes,k=w.scale;
  ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0));ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
  if(f&1){const mi=getTinted(facialImgs["m_"+colIdx],color);if(mi)ctx.drawImage(mi,-16*k,3*k,32*k,11*k)}
@@ -140,24 +144,30 @@ function drawProps(t){const W=canvas.clientWidth,H=canvas.clientHeight,e=window.
  if(e===0){for(let i=0;i<8;i++){const x=50+i*(W-100)/7,y=H-30;let glow=.25;for(const w of allWisps()){const d=Math.hypot(w.nodes[0].x-x,w.nodes[0].y-y);if(d<110)glow=Math.max(glow,1-d/140)}ctx.fillStyle=`rgba(94,242,214,${glow})`;ctx.beginPath();ctx.arc(x,y,7+glow*7+Math.sin(t*2+i)*1.5,0,7);ctx.fill();ctx.fillStyle="#a7f3d0";ctx.fillRect(x-1.5,y,3,10)}}
  if(e===5){ctx.fillStyle="rgba(125,211,252,.5)";for(let i=0;i<26;i++){const x=(i*67+t*18)%W,y=H-36+Math.sin(i*2.1+t*1.26)*5;ctx.fillRect(x,y,2.4,2.4)}}}
 function drawFx(dt){for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.life-=dt*.7;if(f.life<=0){fx.splice(i,1);continue}f.x+=f.vx;f.y+=f.vy;if(f.ring){f.r+=dt*46;ctx.strokeStyle=`rgba(186,230,253,${f.life*.7})`;ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.stroke()}else{ctx.globalAlpha=Math.max(0,f.life);ctx.fillStyle=f.c;ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.fill();ctx.globalAlpha=1;if(f.heart){ctx.fillStyle=f.c;ctx.font="10px system-ui";ctx.fillText("♥",f.x-4,f.y-4)}}}}
-function drawEnv(t){const W=canvas.clientWidth,H=canvas.clientHeight,e=window._env||0;const bg=bgImgs[e];if(bg&&bg.complete&&bg.naturalWidth){const sc=Math.max(W/bg.naturalWidth,H/bg.naturalHeight),dw=bg.naturalWidth*sc,dh=bg.naturalHeight*sc;ctx.drawImage(bg,(W-dw)/2+Math.sin(t*.05)*4,(H-dh)/2,dw,dh);ctx.fillStyle="rgba(10,8,24,.12)";ctx.fillRect(0,0,W,H)}else{const skies=[["#071714","#13382e","#0a2019"],["#fdf6f0","#f7d6e0","#c8d9f8"],["#16697a","#0b3a54","#061a2e"],["#140d26","#8c3b2b","#d97f38"],["#0f203c","#4b3d60","#e8f1fc"],["#ff6b6b","#feca57","#2e1f47"]][e];const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,skies[0]);g.addColorStop(.55,skies[1]);g.addColorStop(1,skies[2]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+function cover(img,W,H,ox,oy,extra=1.06){if(!img||!img.complete||!img.naturalWidth)return false;const sc=Math.max(W/img.naturalWidth,H/img.naturalHeight)*extra,dw=img.naturalWidth*sc,dh=img.naturalHeight*sc;ctx.drawImage(img,(W-dw)/2+ox,(H-dh)/2+oy,dw,dh);return true}
+const fgFadeCache={};
+function fadedFg(img){if(!img||!img.complete||!img.naturalWidth)return null;if(fgFadeCache[img.src])return fgFadeCache[img.src];const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;const g=c.getContext("2d");g.drawImage(img,0,0);g.globalCompositeOperation="destination-in";const gr=g.createLinearGradient(0,0,0,c.height);gr.addColorStop(0,"rgba(0,0,0,0)");gr.addColorStop(.45,"rgba(0,0,0,1)");g.fillStyle=gr;g.fillRect(0,0,c.width,c.height);fgFadeCache[img.src]=c;return c}
+function drawEnv(t){const W=canvas.clientWidth,H=canvas.clientHeight,e=window._env||0;
+ const tx=(mouse.x/W-.5)||0,ty=(mouse.y/H-.5)||0;parX+=(tx-parX)*.03;parY+=(ty-parY)*.03;
+ const drift=Math.sin(t*.07)*5;
+ if(bgFar[e]&&bgFar[e].complete){cover(bgFar[e],W,H,-parX*6+drift*.3,-parY*3,1.08);cover(bgImgs[e],W,H,-parX*13+drift*.6,-parY*6,1.07);ctx.fillStyle="rgba(8,10,22,.10)";ctx.fillRect(0,0,W,H)}
+ else{const skies=[["#071714","#13382e","#0a2019"],["#fdf6f0","#f7d6e0","#c8d9f8"],["#16697a","#0b3a54","#061a2e"],["#140d26","#8c3b2b","#d97f38"],["#0f203c","#4b3d60","#e8f1fc"],["#ff6b6b","#feca57","#2e1f47"]][e];const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,skies[0]);g.addColorStop(.55,skies[1]);g.addColorStop(1,skies[2]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
  ctx.fillStyle="rgba(255,255,255,.75)";if(e===3||e===4)for(let i=0;i<50;i++)ctx.fillRect((i*97)%W,(i*57)%(H*.5),1.6,1.6);
  if(e===3){ctx.fillStyle="#fef3c7";ctx.beginPath();ctx.arc(W*.82,H*.16,26,0,7);ctx.fill()}
  if(e===1){ctx.save();ctx.globalAlpha=.14;ctx.fillStyle="#fff";for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(W*(.15+i*.25),0);ctx.lineTo(W*(.3+i*.25),0);ctx.lineTo(W*(.45+i*.25),H);ctx.lineTo(W*(.2+i*.25),H);ctx.fill()}ctx.restore()}
  if(e===4){ctx.strokeStyle="rgba(110,231,183,.55)";ctx.lineWidth=10;ctx.beginPath();for(let x=0;x<=W;x+=16)ctx.lineTo(x,40+Math.sin(x*.012+t)*16);ctx.stroke()}
  if(e===2){ctx.strokeStyle="rgba(125,211,252,.16)";for(let i=0;i<24;i++){ctx.beginPath();ctx.arc((i*83)%W,(i*37)%(H*.33),18+((i*13)%22),0,7);ctx.stroke()}}
- ctx.fillStyle="rgba(0,0,0,.28)";ctx.beginPath();ctx.moveTo(0,H);if(e===3){ctx.lineTo(0,H*.72);ctx.bezierCurveTo(W*.3,H*.58,W*.6,H*.8,W,H*.66)}else if(e===5){ctx.lineTo(0,H*.8);ctx.bezierCurveTo(W*.3,H*.74+Math.sin(t*.8)*7,W*.7,H*.84,W,H*.78)}else{ctx.lineTo(0,H*.78);ctx.lineTo(W*.18,H*.62);ctx.lineTo(W*.38,H*.78);ctx.lineTo(W*.62,H*.6);ctx.lineTo(W*.84,H*.76);ctx.lineTo(W,H*.64)}ctx.lineTo(W,H);ctx.fill();
+ ctx.fillStyle="rgba(0,0,0,.28)";ctx.beginPath();ctx.moveTo(0,H);if(e===3){ctx.lineTo(0,H*.72);ctx.bezierCurveTo(W*.3,H*.58,W*.6,H*.8,W,H*.66)}else if(e===5){ctx.lineTo(0,H*.8);ctx.bezierCurveTo(W*.3,H*.74+Math.sin(t*.8)*7,W*.7,H*.84,W,H*.78)}else{ctx.lineTo(0,H*.78);ctx.lineTo(W*.18,H*.62);ctx.lineTo(W*.38,H*.78);ctx.lineTo(W*.62,H*.6);ctx.lineTo(W*.84,H*.76);ctx.lineTo(W,H*.64)}ctx.lineTo(W,H);ctx.fill()}
  for(const pt of particles){pt.y+= (e===4? pt.v*1.4 : e===0||e===2? -pt.v : pt.v*.35);pt.x+=Math.sin(t+pt.ph)*.4+(e===3?1.1:e===5?.3:0);if(pt.y<0)pt.y=H;if(pt.y>H)pt.y=0;if(pt.x>W)pt.x=0;ctx.fillStyle=e===0?"rgba(255,203,107,.9)":e===2?"rgba(186,230,253,.65)":"rgba(255,255,255,.8)";ctx.beginPath();ctx.arc(pt.x,pt.y,pt.s,0,7);ctx.fill()}
- ctx.fillStyle="rgba(0,0,0,.18)";ctx.fillRect(0,H-46,W,46);
- if(e===5){ctx.strokeStyle="rgba(125,211,252,.7)";ctx.beginPath();for(let x=0;x<=W;x+=14)ctx.lineTo(x,H-38+Math.sin(x*.05+t*1.26)*4);ctx.stroke()}
- const vg=ctx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.85);vg.addColorStop(0,"transparent");vg.addColorStop(1,"rgba(0,0,0,.32)");ctx.fillStyle=vg;ctx.fillRect(0,0,W,H)}
+ if(!Number.isFinite(parX))parX=0;if(!Number.isFinite(parY))parY=0;const fg=(W>0&&H>0)?fadedFg(bgFg[e]):null;if(fg&&fg.width>0&&fg.height>0){const fh=H*.34;ctx.globalAlpha=.94;ctx.drawImage(fg,-parX*26+drift,H-fh,W*1.04,fh);ctx.globalAlpha=1}
+ const vg=ctx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.85);vg.addColorStop(0,"transparent");vg.addColorStop(1,"rgba(0,0,0,.30)");ctx.fillStyle=vg;ctx.fillRect(0,0,W,H)}
 let lastT=0;
-function frame(now){const t=now/1000,dt=Math.min(.05,(now-lastT)/1000||.016);lastT=now;beatT+=dt;if(beatT>=1.2){beatT=0;beat++}
+function frame(now){try{frameBody(now)}catch(err){console.warn(err.stack||err)}requestAnimationFrame(frame)}
+function frameBody(now){const t=now/1000,dt=Math.min(.05,(now-lastT)/1000||.016);lastT=now;beatT+=dt;if(beatT>=1.2){beatT=0;beat++}
  if(canvas.clientWidth&&canvas.width!==canvas.clientWidth*devicePixelRatio){canvas.width=canvas.clientWidth*devicePixelRatio;canvas.height=canvas.clientHeight*devicePixelRatio}
  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);drawEnv(t);
  drawProps(t);const list=allWisps().sort((a,b)=>a.nodes[0].y-b.nodes[0].y);for(const w of list){if(!w.homeX){w.homeX=w.nodes[0].x;w.homeY=w.nodes[0].y}stepWisp(w,t,dt);if(w.rip>0)w.rip-=.02;drawWisp(w,t)}drawFx(dt);
- if(pair&&orbs.length){for(const o of orbs){o.y+=Math.sin(t*2+o.i)*.3;ctx.fillStyle="rgba(253,224,171,.92)";ctx.beginPath();ctx.arc(o.x,o.y,15,0,7);ctx.fill();ctx.fillStyle="#7c2d12";ctx.font="13px system-ui";ctx.textAlign="center";ctx.fillText(o.icon,o.x,o.y+5)}}
- requestAnimationFrame(frame)}
+ if(pair&&orbs.length){for(const o of orbs){o.y+=Math.sin(t*2+o.i)*.3;ctx.fillStyle="rgba(253,224,171,.92)";ctx.beginPath();ctx.arc(o.x,o.y,15,0,7);ctx.fill();ctx.fillStyle="#7c2d12";ctx.font="13px system-ui";ctx.textAlign="center";ctx.fillText(o.icon,o.x,o.y+5)}}}
 async function load(){if(!sid){$("#empty").hidden=false;return}$("#empty").hidden=true;const h={};const sec=hostSecret();if(sec)h["X-Host-Secret"]=sec;let r=await fetch(`/api/s/${sid}`,{headers:h});
  if(r.status===404){const sec2=hostSecret();
   if(sec2){const cr=await fetch("/api/sanctuaries",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({host_secret:sec2,env_id:window._env||0,host_ghost:window._hostGhost||[0x01,0,0,1,2,1,0]})});const cj=await cr.json().catch(()=>({}));
@@ -196,7 +206,7 @@ $("#hero").addEventListener("pointermove",e=>{const r=e.target.getBoundingClient
 addEventListener("hashchange",()=>{sid=location.hash.slice(1)||null;load()});
 (async()=>{let man=null;try{man=await(await fetch("/assets/manifest.json")).json()}catch{}
  const eyePaths=man?.eyes?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/eyes/${i}.svg`);const itemPaths=man?.items?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/items/${i}.svg`);const hatPaths=man?.hats?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/hats/${i}.svg`);
- bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));eyeImgs=loadImgs(eyePaths);
+ bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));bgFar=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_far.jpg`));bgFg=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fg.jpg`));eyeImgs=loadImgs(eyePaths);
  for(const nm of HAIR_FILES){const im=new Image();im.src=`/assets/ghost/hair/${nm}.png`;hairShapeImgs[nm]=im}
  for(let ci=0;ci<5;ci++){const a=new Image();a.src=`/assets/ghost/facial/mustache_${ci}.svg`;facialImgs["m_"+ci]=a;const b=new Image();b.src=`/assets/ghost/facial/beard_${ci}.svg`;facialImgs["b_"+ci]=b}itemImgs=loadImgs(itemPaths);hatImgs=loadImgs(hatPaths);window._manifest=man;
  const fill=(sel,arr)=>sel.replaceChildren(...arr.map((v,i)=>new Option(v,i)));["#fBeat0","#fBeat1","#fBeat2"].forEach((s2,i)=>{fill($(s2),MIMES);$(s2).value=i});
@@ -213,5 +223,5 @@ addEventListener("hashchange",()=>{sid=location.hash.slice(1)||null;load()});
  $("#hairColor").addEventListener("input",e=>{CUST.hairColor=e.target.value;if(heroWisp)heroWisp.soul=currentSoul()});
  $("#mustBtn").onclick=e=>{CUST.mustache=!CUST.mustache;e.target.classList.toggle("sel",CUST.mustache);if(heroWisp)heroWisp.soul=currentSoul()};
  $("#beardBtn").onclick=e=>{CUST.beard=!CUST.beard;e.target.classList.toggle("sel",CUST.beard);if(heroWisp)heroWisp.soul=currentSoul()};
- if(sid&&localStorage.getItem("wispn_host_"+sid))toast("Welcome back, host");window._env=0;makeParticles();requestAnimationFrame(frame);await load()})();
+ if(new URLSearchParams(location.search).has("limbo"))openLimbo();if(sid&&localStorage.getItem("wispn_host_"+sid))toast("Welcome back, host");window._env=0;makeParticles();requestAnimationFrame(frame);await load()})();
 

@@ -250,5 +250,43 @@
         "file": "assets/ghost/facial/beard_4.svg"
       }
     ]
-  }
+  },
+  "backgroundLayers": [
+    {
+      "env": "forest",
+      "far": "assets/environments/forest_far.jpg",
+      "mid": "assets/environments/forest_bg.jpg",
+      "fg": "assets/environments/forest_fg.jpg"
+    },
+    {
+      "env": "heaven",
+      "far": "assets/environments/heaven_far.jpg",
+      "mid": "assets/environments/heaven_bg.jpg",
+      "fg": "assets/environments/heaven_fg.jpg"
+    },
+    {
+      "env": "sea",
+      "far": "assets/environments/sea_far.jpg",
+      "mid": "assets/environments/sea_bg.jpg",
+      "fg": "assets/environments/sea_fg.jpg"
+    },
+    {
+      "env": "dunes",
+      "far": "assets/environments/dunes_far.jpg",
+      "mid": "assets/environments/dunes_bg.jpg",
+      "fg": "assets/environments/dunes_fg.jpg"
+    },
+    {
+      "env": "mountain",
+      "far": "assets/environments/mountain_far.jpg",
+      "mid": "assets/environments/mountain_bg.jpg",
+      "fg": "assets/environments/mountain_fg.jpg"
+    },
+    {
+      "env": "beach",
+      "far": "assets/environments/beach_far.jpg",
+      "mid": "assets/environments/beach_bg.jpg",
+      "fg": "assets/environments/beach_fg.jpg"
+    }
+  ]
 }
