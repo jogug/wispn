@@ -17,7 +17,7 @@ function ik(sx,sy,tx,ty,l1,l2,bend){const dx=tx-sx,dy=ty-sy;let d=Math.hypot(dx,
 function poseForMime(w,t,m){const s=w.soul,ph=t*(0.9+s.mime_tempo*.45)+w.phase,sn=Math.sin(ph),cs=Math.cos(ph);const base={ox:0,oy:0,rot:0,sx:1,sy:1,seg:1,blush:.35,handL:[-24,18],handR:[24,18],headTilt:0};
  if(m===0)return{...base,oy:4-3*Math.max(0,sn),handL:[-7,-6],handR:[7,sn>0?-6:4],blush:sn>0?.75:.4,headTilt:-4*sn};
  if(m===1)return{...base,oy:-22*Math.abs(sn),handL:[-22,-34],handR:[22,-34],sy:1+.08*Math.abs(cs)};
- if(m===2)return{...base,ox:18*sn,rot:5*sn,handL:[0,8],handR:[0,8],headTilt:6*sn};
+ if(m===2)return{...base,ox:18*sn,rot:5*sn,handL:[-5,8],handR:[5,8],headTilt:6*sn};
  if(m===3)return{...base,ox:8*sn,rot:16,headTilt:28,handL:[-8,4],handR:[26,22]};
  if(m===4)return{...base,oy:14*Math.max(0,sn),rot:12,handL:[-10,12],handR:[10,12],headTilt:8};
  if(m===5){return{...base,sx:Math.abs(cs)*.9+.25,flare:1.25,handL:[-28,0],handR:[28,0],rot:8*sn,twirl:cs,twirlSin:sn}}
@@ -85,7 +85,7 @@ function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{p
  ctx.save();ctx.globalCompositeOperation="screen";const au=ctx.createRadialGradient(n[0].x,n[0].y,4,n[0].x,n[0].y,65*k);au.addColorStop(0,tint);au.addColorStop(1,"transparent");ctx.globalAlpha=.15+.15*Math.sin(t*2*Math.PI*.8+w.phase);ctx.fillStyle=au;ctx.beginPath();ctx.arc(n[0].x,n[0].y,65*k,0,7);ctx.fill();ctx.restore();
  const shoulder=(side)=>{const d={x:n[2].x-n[1].x,y:n[2].y-n[1].y},l=Math.hypot(d.x,d.y)||1,dx=d.x/l,dy=d.y/l;return{x:n[1].x+(-dy)*side*20*k+dx*-2*k,y:n[1].y+(dx)*side*20*k+dy*-2*k}};
  const handWorld=(h,side)=>{if(w.pairHands)return side<0?w.pairHands.L:w.pairHands.R;return{x:n[0].x+h[0]*k,y:n[0].y+h[1]*k}};
- const drawArm=(side,target,onTop)=>{const sh=shoulder(side),sol=ik(sh.x,sh.y,target.x,target.y,17*k,15*k,side);
+ const drawArm=(side,rawTarget,onTop)=>{const sh=shoulder(side);const maxLen=32*k-.5;let tdx=rawTarget.x-sh.x,tdy=rawTarget.y-sh.y;const td=Math.hypot(tdx,tdy)||1;if(td>maxLen){tdx*=maxLen/td;tdy*=maxLen/td}const target={x:sh.x+tdx,y:sh.y+tdy},sol=ik(sh.x,sh.y,target.x,target.y,17*k,15*k,side);
  if(!w.armChains)w.armChains={};const key=side<0?"L":"R";let ch=w.armChains[key];
  if(!ch||ch.length!==4){ch=w.armChains[key]=Array.from({length:4},(_,i)=>({x:sh.x+(target.x-sh.x)*i/3,y:sh.y+(target.y-sh.y)*i/3,px:sh.x,py:sh.y}))}
  const rest=(32*k)/3,mid={x:(sh.x+target.x)/2,y:(sh.y+target.y)/2},fdx=target.x-sh.x,fdy=target.y-sh.y,fl=Math.hypot(fdx,fdy)||1,qx=-fdy/fl,qy=fdx/fl,bend=side*13*k;
@@ -93,23 +93,23 @@ function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{p
  for(let i=1;i<4;i++){const pt=ch[i],vx=(pt.x-pt.px)*.86,vy=(pt.y-pt.py)*.86;pt.px=pt.x;pt.py=pt.y;pt.x+=vx+ENV_WIND[window._env||0]*.05;pt.y+=vy+.12;
   const gi=i/3,gx=sh.x+fdx*gi+qx*bend*2*gi*(1-gi),gy=sh.y+fdy*gi+qy*bend*2*gi*(1-gi);pt.x+=(gx-pt.x)*.16;pt.y+=(gy-pt.y)*.16}
  ch[3].x+=(target.x-ch[3].x)*.55;ch[3].y+=(target.y-ch[3].y)*.55;
- for(let it=0;it<3;it++){ch[0].x=sh.x;ch[0].y=sh.y;for(let i=1;i<4;i++){const A=ch[i-1],B=ch[i];let ddx=B.x-A.x,ddy=B.y-A.y,dd=Math.hypot(ddx,ddy)||1,diff=(dd-rest)/dd*(i===1?.25:.5);B.x-=ddx*diff;B.y-=ddy*diff;A.x+=ddx*diff*.15;A.y+=ddy*diff*.15}}
- ch[3].x=target.x;ch[3].y=target.y;sol.hx=target.x;sol.hy=target.y;sol.ex=ch[2].x;sol.ey=ch[2].y;
+ for(let it=0;it<4;it++){for(let i=1;i<4;i++){const A=ch[i-1],B=ch[i];let ddx=B.x-A.x,ddy=B.y-A.y,dd=Math.hypot(ddx,ddy)||1;B.x=A.x+ddx/dd*rest;B.y=A.y+ddy/dd*rest}ch[3].x=target.x;ch[3].y=target.y;for(let i=2;i>=0;i--){const A=ch[i],B=ch[i+1];let ddx=A.x-B.x,ddy=A.y-B.y,dd=Math.hypot(ddx,ddy)||1;A.x=B.x+ddx/dd*rest;A.y=B.y+ddy/dd*rest}ch[0].x=sh.x;ch[0].y=sh.y}
+ sol.hx=target.x;sol.hy=target.y;sol.ex=ch[2].x;sol.ey=ch[2].y;
  const widths=[6.5,5.4,3.6,.4],left=[],right=[];
  for(let i=0;i<4;i++){const A=ch[Math.max(0,i-1)],B=ch[Math.min(3,i+1)];let tx=B.x-A.x,ty=B.y-A.y;const tl=Math.hypot(tx,ty)||1;tx/=tl;ty/=tl;const wd=widths[i]*k;left.push({x:ch[i].x-ty*wd,y:ch[i].y+tx*wd});right.push({x:ch[i].x+ty*wd,y:ch[i].y-tx*wd})}
  const ag=ctx.createLinearGradient(sh.x,sh.y,target.x,target.y);ag.addColorStop(0,tint);ag.addColorStop(1,tint+"99");
  ctx.fillStyle=ag;ctx.fill(new Path2D(smoothPath([...left,...right.reverse()])));return sol};
- drawHair(w,t,true);const backSide=w.gaze.x>=0?1:-1;drawArm(backSide,handWorld(backSide>0?p.handR:p.handL,backSide),false);
+ drawHair(w,t,true);drawArm(1,handWorld(p.handR,1),false);
  const grad=ctx.createLinearGradient(n[0].x,n[0].y-26*k,n[4].x,n[4].y);grad.addColorStop(0,tint);grad.addColorStop(1,tint+"66");ctx.globalAlpha=.95;ctx.fillStyle=grad;ctx.fill(path);ctx.globalAlpha=1;
- const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
- ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);ctx.fillStyle="rgba(244,114,182,.35)";ctx.beginPath();ctx.ellipse(-14*k,7*k,10*k,6*k,0,0,7);ctx.ellipse(14*k,7*k,10*k,6*k,0,0,7);ctx.fill();
- const twirlOff=(p.twirlSin||0)*16*k,backFace=(p.twirl!=null&&p.twirl<0);ctx.save();if(backFace)ctx.globalAlpha=.32;ctx.translate(twirlOff,0);const eyeImg=eyeImgs[w.forceEye!=null?w.forceEye:(s.appearance&15)%5];ctx.save();ctx.scale(w.gaze.x>5?.82:1,blinkScale);if(eyeImg&&eyeImg.complete)ctx.drawImage(eyeImg,-20*k,-9*k,40*k,18*k);else{ctx.fillStyle="#1f2937";ctx.font=`${12*k}px system-ui`;ctx.textAlign="center";ctx.fillText("• ‿ •",0,4*k)}ctx.restore();ctx.restore();
- const hatIdx=(s.item_and_hat&15)%6;if(hatIdx){ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(-w.gaze.x*.2*k,-24*k+Math.max(-2,Math.min(4,w.hatSpring.y)));const hi=hatImgs[hatIdx-1];ctx.font=`${22*k}px system-ui`;ctx.textAlign="center";if(hi&&hi.complete)ctx.drawImage(hi,-13*k,-22*k,26*k,26*k);else ctx.fillText(HATS[hatIdx],0,0);ctx.restore()}ctx.restore();
- drawHair(w,t,false);const frontSol=drawArm(-backSide,handWorld(backSide>0?p.handL:p.handR,-backSide),true);
+ const hatIdx=(s.item_and_hat&15)%6;if(hatIdx){ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(-w.gaze.x*.2*k,-24*k+Math.max(-2,Math.min(4,w.hatSpring.y)));const hi=hatImgs[hatIdx-1];ctx.font=`${22*k}px system-ui`;ctx.textAlign="center";if(hi&&hi.complete)ctx.drawImage(hi,-13*k,-22*k,26*k,26*k);else ctx.fillText(HATS[hatIdx],0,0);ctx.restore()}
+ drawHair(w,t,false);const frontSol=drawArm(-1,handWorld(p.handL,-1),true);
  const itemIdx=(s.item_and_hat>>4)%6;if(itemIdx){const dangles=itemIdx>=4;ctx.save();ctx.translate(frontSol.hx,frontSol.hy);ctx.rotate(dangles?w.pend:(Math.atan2(frontSol.hy-frontSol.ey,frontSol.hx-frontSol.ex)+.78));const ii=itemImgs[itemIdx-1];if(ii&&ii.complete)ctx.drawImage(ii,-11*k,0,22*k,22*k);else{ctx.font=`${16*k}px system-ui`;ctx.textAlign="center";ctx.fillText(ITEMS[itemIdx],0,14*k)}ctx.restore();
   if(itemIdx>=3&&Math.random()<.35){const gc=window._manifest?.items?.[itemIdx-1]?.glowColor||"#fbbf24";fx.push({x:frontSol.hx,y:frontSol.hy+8*k,vx:(Math.random()-.5)*.7,vy:-.4-Math.random()*.6,life:1,c:gc,r:1.6+Math.random()*1.6})}
   if(itemIdx>=4){ctx.save();ctx.globalCompositeOperation="screen";ctx.fillStyle="rgba(251,191,36,.25)";ctx.beginPath();ctx.arc(frontSol.hx,frontSol.hy+10*k,16*k,0,7);ctx.fill();ctx.restore()}}
  ctx.strokeStyle=(w.goldRim||s.host_react===3)?"rgba(251,191,36,.85)":"rgba(255,255,255,.6)";ctx.lineWidth=2.5*k;ctx.beginPath();ctx.arc(n[0].x,n[0].y,24*k,Math.PI*1.05,Math.PI*1.55);ctx.stroke();
+ const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
+ ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);ctx.fillStyle="rgba(244,114,182,.35)";ctx.beginPath();ctx.ellipse(-14*k,7*k,10*k,6*k,0,0,7);ctx.ellipse(14*k,7*k,10*k,6*k,0,0,7);ctx.fill();
+ const twirlOff=(p.twirlSin||0)*16*k,backFace=(p.twirl!=null&&p.twirl<0);ctx.save();if(backFace)ctx.globalAlpha=.32;ctx.translate(twirlOff,0);const eyeImg=eyeImgs[w.forceEye!=null?w.forceEye:(s.appearance&15)%5];ctx.save();ctx.scale(w.gaze.x>5?.82:1,blinkScale);if(eyeImg&&eyeImg.complete)ctx.drawImage(eyeImg,-20*k,-9*k,40*k,18*k);else{ctx.fillStyle="#1f2937";ctx.font=`${12*k}px system-ui`;ctx.textAlign="center";ctx.fillText("• ‿ •",0,4*k)}ctx.restore();ctx.restore();ctx.restore();
  if(s.host_react){const a=t*1.2+s.visitor_id;ctx.fillStyle="#fde68a";ctx.font="13px system-ui";ctx.textAlign="center";ctx.fillText("✦",n[0].x+Math.cos(a)*30*k,n[0].y-18*k+Math.sin(a)*8*k)}
  if(w.rip>0){ctx.strokeStyle=`rgba(255,255,255,${w.rip})`;ctx.beginPath();ctx.arc(n[0].x,n[0].y,(1-w.rip)*44+12,0,7);ctx.stroke()}}
 function makeParticles(){const n=PART_N[window._env||0];particles=Array.from({length:n},()=>({x:Math.random()*canvas.clientWidth,y:Math.random()*canvas.clientHeight,s:.5+Math.random()*2,v:.2+Math.random()*.8,ph:Math.random()*7}));
