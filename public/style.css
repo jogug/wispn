@@ -9,7 +9,7 @@ button{cursor:pointer;border-radius:.6rem;border:1px solid #555;background:#222;
 #particles i{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffffff88;animation:drift 7s linear infinite}
 @keyframes drift{from{transform:translateY(60vh)}to{transform:translateY(-4vh)}}
 #ghosts,#hostGhost{display:flex;flex-wrap:wrap;gap:1rem;padding:1rem}
-.ghost{width:84px;text-align:center;cursor:pointer}.ghost .body{font-size:3rem;line-height:1;position:relative}
+.ghost{width:84px;text-align:center;cursor:pointer}.ghost .body{position:relative;width:84px;height:84px}.ghost .layer{position:absolute;inset:0;width:84px;height:84px}.ghost .layer.item{inset:auto 0 0 auto;width:34px;height:34px}.ghost .hat{position:absolute;top:-8px;left:0;right:0;font-size:1.3rem}
 .ghost .react{font-size:1.4rem;min-height:1.6rem}.ghost small{opacity:.7}
 @keyframes mime-0{0%,100%{transform:translateY(0) scale(.92)}50%{transform:translateY(2px) scale(1)}} /* Shy Peek */
 @keyframes mime-1{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px) rotate(-6deg)}} /* Happy Hop */

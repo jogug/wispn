@@ -61,7 +61,7 @@ async fn post_sanctuary(State(store): State<Store>, Path(id_hex): Path<String>, 
             if !r.mime_seq.iter().all(|&v| valid_mime(v)) { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"mime_seq values must be 0..7"}))); }
             let Some(mut s) = store.get_mut(&id) else { return (StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"sanctuary not found"}))); };
             let vid = if !r.visitor_token.is_empty() { visitor_id(r.visitor_token.as_bytes()) } else if r.visitor_id != 0 { r.visitor_id } else { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"visitor_token required"}))); };
-            let rec = SoulRecord { visitor_id: vid, appearance: r.appearance, item_and_hat: r.item_and_hat, mime_seq: r.mime_seq, mime_tempo: r.mime_tempo, host_react: 0, padding: 0 };
+            let rec = SoulRecord { visitor_id: vid, appearance: r.appearance, item_and_hat: r.item_and_hat, mime_seq: r.mime_seq, mime_tempo: r.mime_tempo.min(3), host_react: 0, padding: 0 };
             if let Some(pos) = s.souls.iter().position(|x| x.visitor_id == vid) { s.souls[pos] = rec; } else { s.souls.push_back(rec); while s.souls.len() > 100 { s.souls.pop_front(); } }
             s.last_active = now();
             (StatusCode::OK, Json(serde_json::json!({"ok":true,"visitor_id":vid,"count":s.souls.len()})))

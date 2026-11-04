@@ -111,3 +111,29 @@ Visitors choose a **3-Beat Mime Loop** from 8 core primitives executed via CSS t
 * Commit on Feature changes
 * Pragmatic Solutions
 * E2E testing locally
+
+---
+
+## 7. Implementation Status (shipped)
+
+Status: implemented, E2E tested locally, release binary built. Deploy step (Fly/VPS/domain) is not done.
+
+### As-built wire format
+* Sanctuary ID in URLs and API paths is the `u64` rendered as 16 lowercase hex chars. The SPA route is `#<16 hex>`, not the base36 example in section 3.
+* Create: `POST /api/sanctuaries` with JSON `{"host_secret":"<32 hex chars>","env_id":0,"host_ghost":[7 bytes]}` returns `{"id":"<16 hex>"}`. The ID is `u64::from_le_bytes(BLAKE3(host_secret)[0..8])` as specified.
+* Host auth: header `X-Host-Secret: <hex>`. The server re-derives the ID and compares. The client keeps the secret in `localStorage` under `wispn_host_<id>`.
+* Read: `GET /api/s/:id` returns binary. Header is 10 bytes: `[env_id, soul_count, host_ghost(7), is_host(0|1)]`, then `soul_count` records of exactly 12 bytes in the section 3 layout. Full sanctuary is 1210 bytes.
+* Write: `POST /api/s/:id` with JSON actions `summon` (`visitor_token`, `appearance`, `item_and_hat`, `mime_seq`, `mime_tempo`), `react` (host only, `visitor_id`, `react` 1..8), and `host_update` (host only, `env_id`, `host_ghost`). `visitor_id` is `u32` from `BLAKE3(visitor_token)[0..4]`. Re-summoning with the same token updates that soul in place.
+* FIFO cap, 30-day eviction (hourly task), and mime validation (0..7, tempo clamped to 0..3) are enforced server-side.
+
+### Deviations from the outline
+* Environment backgrounds are CSS gradients (`.env-0` to `.env-5`) plus particles. No `.webp` files ship. Drop a `{name}_bg.webp` into `public/assets/environments/` to override, as noted in `public/assets/manifest.json`.
+* Ghost bodies, eyes, and held items render from the SVG files in `public/assets/ghost/`. Hats and host reactions render as emoji overlays. There is no hat or hands field beyond the packed nibbles, so `hands/` SVGs ship as spare assets.
+* Host reactions 1..8 map to emoji in the client (`app.js` `REACTS`). The wire value stays a mime ID as specified.
+
+### Run and test
+```sh
+cargo build --release && PORT=3000 ./target/release/wispn
+# open http://localhost:3000
+```
+E2E covers create, 101 summons capped at 100, binary length and header, visitor react rejected with 403, host react accepted, unknown sanctuary 404, and invalid mime 400.
