@@ -72,6 +72,31 @@
       "file": "assets/ghost/hats/4.png",
       "pivotX": 50,
       "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/5.png",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/6.png",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/7.png",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/8.png",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/9.png",
+      "pivotX": 50,
+      "pivotY": 78
     }
   ],
   "sockets": {
