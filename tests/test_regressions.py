@@ -74,6 +74,9 @@ try:
     s, b, _ = raw("POST", f"/api/s/{sid5}", {"action": "summon", "visitor_token": "host-device-2", "mime_seq": [3, 4, 5]}, headers={"X-Host-Secret": sec5})
     assert json.loads(b)["count"] == 2, "host re-login from a new device must replace the old host soul, keeping guests"
     print("host soul replacement PASS")
+    s, b, _ = raw("GET", f"/api/s/{sid5}/meta"); assert json.loads(b).get("host_vid"), "meta must expose host_vid so other browsers can find the host ghost"
+    print("meta host_vid PASS")
+
 
 
     # bad passwords are rejected at create
@@ -137,4 +140,6 @@ assert "loadBusy" in js, "concurrent loads must be serialised"
 print("accessories persist, face cache, guest home, load dedupe PASS")
 assert "pp.souls.find" in js and "CUST.item=(mine.item_and_hat>>4)%6" in js, "guest join must copy accessories from the home ghost"
 print("guest accessories from home ghost PASS")
+assert "fromHome" in js and "Your ghost was refreshed" in js, "guest accessories must refresh however the guest arrives"
+print("arrival-independent guest sync PASS")
 print("ALL PASS")

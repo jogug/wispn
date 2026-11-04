@@ -86,7 +86,7 @@ async fn unlock_sanctuary(State(app): State<App>, Path(id_hex): Path<String>, Js
 async fn get_meta(State(app): State<App>, Path(id_hex): Path<String>) -> impl IntoResponse {
     let Ok(id) = u64::from_str_radix(&id_hex, 16) else { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({}))); };
     let Some(s) = app.store.get(&id) else { return (StatusCode::NOT_FOUND, Json(serde_json::json!({}))); };
-    (StatusCode::OK, Json(serde_json::json!({"locked": s.password_hash.is_some(), "env": s.env_id})))
+    (StatusCode::OK, Json(serde_json::json!({"locked": s.password_hash.is_some(), "env": s.env_id, "host_vid": s.host_vid})))
 }
 
 #[derive(Deserialize)]

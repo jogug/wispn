@@ -179,13 +179,18 @@ window._env=p.env;window._hostGhost=p.hostGhost;souls=p.souls;syncWisps();makePa
  if(visitorNoWisp){lb.innerHTML=ICON_LOCK;lb.disabled=false;lb.dataset.mode="lock";lb.title="Host unlock";lb.setAttribute("aria-label","Host unlock")}
  else{lb.innerHTML=ICON_GHOST;lb.disabled=guest;lb.dataset.mode="limbo";lb.title="Enter Limbo";lb.setAttribute("aria-label","Enter Limbo")}$("#envWrap").hidden=!isHost();$("#envSel").value=p.env;updateOpenBtn();
  if(isHost()){const mine=souls.find(s=>s.visitor_id===myVid());if(mine){CUST.eyes=mine.appearance&15;CUST.hat=mine.item_and_hat&15;CUST.item=(mine.item_and_hat>>4)%6;if(mine.bodyColor)CUST.bodyColor=mine.bodyColor;saveCust();const bcEl=$("#bodyColor");if(bcEl)bcEl.value=CUST.bodyColor}}
- if(joinAsGuest){joinAsGuest=false;if(!isHost()&&!isGuest()){
-  let src=null;const own=mySanctuary();
-  if(own&&own!==sid){try{const rr=await fetch(`/api/s/${own}`);if(rr.ok){const pp=decodePacket(await rr.arrayBuffer());const mine=pp.souls.find(s=>s.visitor_id===myVid());if(mine){let bc="";try{const cm=await(await fetch(`/api/s/${own}/colors`)).json();const cc=cm[mine.visitor_id];if(cc&&cc[0])bc=cc[0]}catch(_){}
-   src={appearance:mine.appearance,item_and_hat:mine.item_and_hat,mime_seq:mine.mime_seq,mime_tempo:mine.mime_tempo,hair:mine.hair,body_color:bc||CUST.bodyColor};
+ {const explicitJoin=joinAsGuest;joinAsGuest=false;
+  if(sid&&!isHost()){
+  let src=null,fromHome=false;const own=mySanctuary();
+  if(own&&own!==sid){try{const rr=await fetch(`/api/s/${own}`);if(rr.ok){const pp=decodePacket(await rr.arrayBuffer());let mine=pp.souls.find(s=>s.visitor_id===myVid());if(!mine){try{const mm=await(await fetch(`/api/s/${own}/meta`)).json();if(mm.host_vid)mine=pp.souls.find(s=>s.visitor_id===mm.host_vid)}catch(_){}}
+   if(mine){let bc="";try{const cm=await(await fetch(`/api/s/${own}/colors`)).json();const cc=cm[mine.visitor_id];if(cc&&cc[0])bc=cc[0]}catch(_){}
+   src={appearance:mine.appearance,item_and_hat:mine.item_and_hat,mime_seq:mine.mime_seq,mime_tempo:mine.mime_tempo,hair:mine.hair,body_color:bc||CUST.bodyColor};fromHome=true;
    CUST.eyes=mine.appearance&15;CUST.hat=mine.item_and_hat&15;CUST.item=(mine.item_and_hat>>4)%6;if(bc)CUST.bodyColor=bc;saveCust()}}}catch(_){}}
+  const cur=souls.find(s=>s.visitor_id===myVid());
+  const need=fromHome?!(cur&&cur.item_and_hat===src.item_and_hat&&cur.appearance===src.appearance&&((cur.bodyColor||"")===(src.body_color||""))):(!cur&&explicitJoin);
+  if(need){
   const cs=currentSoul();if(!src)src={appearance:cs.appearance,item_and_hat:cs.item_and_hat,mime_seq:cs.mime_seq,mime_tempo:cs.packed_tempo,hair:cs.hair,body_color:CUST.bodyColor};
-  const body={action:"summon",visitor_token:visitorToken(),appearance:src.appearance,item_and_hat:src.item_and_hat,mime_seq:src.mime_seq,mime_tempo:src.mime_tempo,hair:src.hair,body_color:src.body_color,hair_color:CUST.hairColor};const r=await fetch(`/api/s/${sid}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(r.ok){localStorage.setItem("wispn_my_vid",j.visitor_id);toast("Your ghost joined as a guest");await load();return}}}
+  const body={action:"summon",visitor_token:visitorToken(),appearance:src.appearance,item_and_hat:src.item_and_hat,mime_seq:src.mime_seq,mime_tempo:src.mime_tempo,hair:src.hair,body_color:src.body_color,hair_color:CUST.hairColor};const r=await fetch(`/api/s/${sid}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(r.ok){localStorage.setItem("wispn_my_vid",j.visitor_id);toast(cur?"Your ghost was refreshed":"Your ghost joined as a guest");await load();return}}}}
  try{const meta=await(await fetch(`/api/s/${sid}/meta`)).json();if(!window._gateChecked){window._gateChecked=true;if(meta.locked&&!isHost()&&!isGuest())$("#unlockGate").hidden=false}}catch{}}
 async function createSanctuary(env,pw){const secret=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");const r=await fetch("/api/sanctuaries",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({host_secret:secret,password:pw||undefined,env_id:env||0,host_ghost:[0x01,0,0,1,2,1,0]})});const j=await r.json();if(!r.ok){toast(j.error||"create failed");return}localStorage.setItem("wispn_host_"+j.id,secret);localStorage.setItem("wispn_my_sanctuary",j.id);sid=j.id;location.hash=sid;await load();return sid}
 function currentSoul(){const nearest=(hex,arr)=>{let best=0,bd=1e12;const v=parseInt(hex.slice(1),16);arr.forEach((c,i)=>{const w=parseInt(c.slice(1),16),d=((v>>16)-(w>>16))**2+(((v>>8)&255)-((w>>8)&255))**2+((v&255)-(w&255))**2;if(d<bd){bd=d;best=i}});return best};
