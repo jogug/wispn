@@ -152,5 +152,25 @@
     "hat": "assets/ghost/hats/{i}.svg",
     "item": "assets/ghost/items/{i}.svg",
     "environment": "css canvas planes; drop {name}_bg.webp into assets/environments/ to override"
+  },
+  "backgrounds": [
+    "assets/environments/forest_bg.jpg",
+    "assets/environments/heaven_bg.jpg",
+    "assets/environments/sea_bg.jpg",
+    "assets/environments/dunes_bg.jpg",
+    "assets/environments/mountain_bg.jpg",
+    "assets/environments/beach_bg.jpg"
+  ],
+  "hair": {
+    "styles": [
+      "None",
+      "Tuft",
+      "Bob",
+      "Long flow",
+      "Spiky",
+      "Bun"
+    ],
+    "colors": 5,
+    "wire": "padding byte: style low nibble, colour high nibble"
   }
 }

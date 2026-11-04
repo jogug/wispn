@@ -250,3 +250,11 @@ Paired orb effects now run full timelines (about 2.6 seconds each). Hug glides b
 Props are simulated. Sea kelp is 9 five-point Verlet strands that sway with the current and bend away from wisps within 60px. Forest mushrooms pulse brighter as a wisp approaches within 110px. Beach draws inverted wisp reflections for wisps in the lower half plus plankton sparkles on the 5 second wave. Dunes run a 4.5 second gust cycle that multiplies cloth wind. Snow, bubbles, and fireflies keep their per-biome motion.
 
 Remaining limits. Reflections are a tinted ellipse silhouette, not a mirrored cloth hull. The boop ring cadence checks elapsed time per frame, so ring spacing is approximate. Visual playback is unverified in this environment because no browser is available.
+
+## 10. Customisation, hair, drag, and painted backgrounds
+
+Hair is configurable in Limbo (6 styles, 5 colours) and travels in the record padding byte. Style is the low nibble, colour the high nibble. Each strand is a Verlet point pulled toward its head anchor with gravity, wind, and dune gusts, drawn behind and in front of the body by style. Mime beats now blend. The last quarter of each 1.2 second beat smoothstep-mixes root motion, squash, head tilt, and both hand targets into the next beat, so choreography no longer snaps. Arms are drawn in the body cloth material with a tint gradient, tapered capsule segments, and tinted hands.
+
+Dragging uses pointer events with mouse and touch fallbacks, works on any wisp, keeps the grab offset, shows grab and grabbing cursors, and sets the drop point as the new home. Dropping your own wisp in the bottom mist still opens Limbo. This replaces the own-wisp-only pointer handling that failed in LibreWolf.
+
+All 6 environments now load generated painted backgrounds from `public/assets/environments/{name}_bg.jpg`, cover-fitted with a slow drift, with the canvas particles, props, and vignette composited on top. The procedural gradient remains as a loading fallback.
