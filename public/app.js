@@ -85,7 +85,20 @@ function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{p
  ctx.save();ctx.globalCompositeOperation="screen";const au=ctx.createRadialGradient(n[0].x,n[0].y,4,n[0].x,n[0].y,65*k);au.addColorStop(0,tint);au.addColorStop(1,"transparent");ctx.globalAlpha=.15+.15*Math.sin(t*2*Math.PI*.8+w.phase);ctx.fillStyle=au;ctx.beginPath();ctx.arc(n[0].x,n[0].y,65*k,0,7);ctx.fill();ctx.restore();
  const shoulder=(side)=>{const d={x:n[2].x-n[1].x,y:n[2].y-n[1].y},l=Math.hypot(d.x,d.y)||1,dx=d.x/l,dy=d.y/l;return{x:n[1].x+(-dy)*side*20*k+dx*-2*k,y:n[1].y+(dx)*side*20*k+dy*-2*k}};
  const handWorld=(h,side)=>{if(w.pairHands)return side<0?w.pairHands.L:w.pairHands.R;return{x:n[0].x+h[0]*k,y:n[0].y+h[1]*k}};
- const drawArm=(side,target,onTop)=>{const sh=shoulder(side),sol=ik(sh.x,sh.y,target.x,target.y,17*k,15*k,side);const ag=ctx.createLinearGradient(sh.x,sh.y,sol.hx,sol.hy);ag.addColorStop(0,tint);ag.addColorStop(1,tint+"aa");ctx.strokeStyle=ag;ctx.lineCap="round";ctx.lineWidth=11*k;ctx.beginPath();ctx.moveTo(sh.x,sh.y);ctx.lineTo(sol.ex,sol.ey);ctx.stroke();{const fdx=sol.hx-sol.ex,fdy=sol.hy-sol.ey,fl2=Math.hypot(fdx,fdy)||1,qx2=-fdy/fl2,qy2=fdx/fl2;ctx.fillStyle=ag;ctx.beginPath();ctx.moveTo(sol.ex+qx2*4.2*k,sol.ey+qy2*4.2*k);ctx.quadraticCurveTo((sol.ex+sol.hx)/2+qx2*2.6*k,(sol.ey+sol.hy)/2+qy2*2.6*k,sol.hx,sol.hy);ctx.quadraticCurveTo((sol.ex+sol.hx)/2-qx2*2.6*k,(sol.ey+sol.hy)/2-qy2*2.6*k,sol.ex-qx2*4.2*k,sol.ey-qy2*4.2*k);ctx.closePath();ctx.fill()}return sol};
+ const drawArm=(side,target,onTop)=>{const sh=shoulder(side),sol=ik(sh.x,sh.y,target.x,target.y,17*k,15*k,side);
+ if(!w.armChains)w.armChains={};const key=side<0?"L":"R";let ch=w.armChains[key];
+ if(!ch||ch.length!==4){ch=w.armChains[key]=Array.from({length:4},(_,i)=>({x:sh.x+(target.x-sh.x)*i/3,y:sh.y+(target.y-sh.y)*i/3,px:sh.x,py:sh.y}))}
+ const rest=(32*k)/3,mid={x:(sh.x+target.x)/2,y:(sh.y+target.y)/2},fdx=target.x-sh.x,fdy=target.y-sh.y,fl=Math.hypot(fdx,fdy)||1,qx=-fdy/fl,qy=fdx/fl,bend=side*13*k;
+ ch[0].x=sh.x;ch[0].y=sh.y;
+ for(let i=1;i<4;i++){const pt=ch[i],vx=(pt.x-pt.px)*.86,vy=(pt.y-pt.py)*.86;pt.px=pt.x;pt.py=pt.y;pt.x+=vx+ENV_WIND[window._env||0]*.05;pt.y+=vy+.12;
+  const gi=i/3,gx=sh.x+fdx*gi+qx*bend*2*gi*(1-gi),gy=sh.y+fdy*gi+qy*bend*2*gi*(1-gi);pt.x+=(gx-pt.x)*.16;pt.y+=(gy-pt.y)*.16}
+ ch[3].x+=(target.x-ch[3].x)*.55;ch[3].y+=(target.y-ch[3].y)*.55;
+ for(let it=0;it<3;it++){ch[0].x=sh.x;ch[0].y=sh.y;for(let i=1;i<4;i++){const A=ch[i-1],B=ch[i];let ddx=B.x-A.x,ddy=B.y-A.y,dd=Math.hypot(ddx,ddy)||1,diff=(dd-rest)/dd*(i===1?.25:.5);B.x-=ddx*diff;B.y-=ddy*diff;A.x+=ddx*diff*.15;A.y+=ddy*diff*.15}}
+ ch[3].x=target.x;ch[3].y=target.y;sol.hx=target.x;sol.hy=target.y;sol.ex=ch[2].x;sol.ey=ch[2].y;
+ const widths=[6.5,5.4,3.6,.4],left=[],right=[];
+ for(let i=0;i<4;i++){const A=ch[Math.max(0,i-1)],B=ch[Math.min(3,i+1)];let tx=B.x-A.x,ty=B.y-A.y;const tl=Math.hypot(tx,ty)||1;tx/=tl;ty/=tl;const wd=widths[i]*k;left.push({x:ch[i].x-ty*wd,y:ch[i].y+tx*wd});right.push({x:ch[i].x+ty*wd,y:ch[i].y-tx*wd})}
+ const ag=ctx.createLinearGradient(sh.x,sh.y,target.x,target.y);ag.addColorStop(0,tint);ag.addColorStop(1,tint+"99");
+ ctx.fillStyle=ag;ctx.fill(new Path2D(smoothPath([...left,...right.reverse()])));return sol};
  drawHair(w,t,true);const backSide=w.gaze.x>=0?1:-1;drawArm(backSide,handWorld(backSide>0?p.handR:p.handL,backSide),false);
  const grad=ctx.createLinearGradient(n[0].x,n[0].y-26*k,n[4].x,n[4].y);grad.addColorStop(0,tint);grad.addColorStop(1,tint+"66");ctx.globalAlpha=.95;ctx.fillStyle=grad;ctx.fill(path);ctx.globalAlpha=1;
  const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
