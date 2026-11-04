@@ -278,3 +278,9 @@ The Limbo editor is built for thumbs. Cards are at least 64px tall, toggles 52px
 Hats are rendered, not emoji. A five-hat sheet (top hat, leaf circlet, crown, cap, moon nightcap) was generated on a flat chroma-green background, keyed out, and segmented into `public/assets/ghost/hats/0..4.png`; the manifest points at the PNGs and the Limbo hat cards preview the actual sprites. The old hat SVGs remain on disk unused.
 
 Five more hats were rendered the same way (second chroma sheet, keyed and segmented into `hats/5..9.png`): wizard hat, mushroom cap, angel halo, pirate tricorn, and sunflower bonnet. The hat slot widened from 5 to 10 styles plus None (low nibble modulo 11), the manifest lists all ten, and the Limbo cards preview each sprite.
+
+## 13. Rendered items and orbs, facial-hair removal, Limbo layout (latest)
+
+Items and interaction buttons are rendered sprites now, generated on chroma sheets, keyed, and segmented like the hats: `items/0..4.png` (blossom, star wand, mushroom, crystal ball, candle) and `public/assets/ui/orb0..4.png` (heart, hand, flame, swirl, notes medallions drawn at 48px in the orb wheel, emoji fallback only while loading). The manifest points at the item PNGs and the Limbo cards preview the real sprites.
+
+Mustache and beard are removed: the Limbo sections, toggles, colour picker, renderer, and packed facial bits are gone (the byte keeps its layout, facial is always 0). Eye cards put each eye asset on a cream chip so the dark eye art reads against the panel. Limbo cards use an even auto-fill grid with centred content. New Sanctuary shrank in the bottom bar (flex .55, smaller type) beside Share and the amber Enter Limbo. Droop now lowers the hands to y=48 with a slow sway instead of 28. Regression coverage for the removal, droop, and sprite wiring lives in `tests/test_regressions.py`.

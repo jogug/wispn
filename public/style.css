@@ -134,3 +134,12 @@ input[type=range]{min-height:48px;accent-color:#f0a832}
  #limbo .heroPane{margin:0 auto}
  .limboActions{bottom:70px}
 }
+
+/* Limbo button layout: even grid, readable eyes, smaller New Sanctuary */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:.55rem}
+.card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;text-align:center}
+.eyePrev{background:#fdf6e3;border-radius:999px;padding:.35rem .75rem;display:inline-flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px rgba(240,168,50,.45)}
+.eyePrev img{height:24px;width:auto;display:block}
+#bottomBar #openBtn{flex:.55;font-size:.85rem;padding:.45rem .5rem}
+#bottomBar #shareBtn{flex:.8}
+#bottomBar #limboBtn{flex:1.3}

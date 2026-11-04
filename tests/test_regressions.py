@@ -32,7 +32,15 @@ try:
     print("hair byte PASS")
 finally:
     proc.terminate()
+html = (root / "public/index.html").read_text()
+assert "mustBtn" not in html and "beardBtn" not in html, "mustache and beard controls must be removed"
 js = (root / "public/app.js").read_text()
+assert "facial:0" in js and "mustBtn" not in js, "souls must not carry facial hair"
+assert "48+3*sn" in js, "droop gesture must lower the hands further"
+assert "orb${i}.png" in js, "interaction orbs must use rendered button sprites"
+man = json.loads((root / "public/assets/manifest.json").read_text())
+assert all(e["file"].endswith(".png") for e in man["items"]), "items must be rendered png sprites"
+print("facial-hair removal, droop, orb and item sprites PASS")
 assert "(1-f*2)" in js and "w.tailPts" in js, "tail anchors must run lx -> tip -> rx into simulated tail points"
 print("tail order (lx -> tip -> rx, simulated) PASS")
 assert "(dy)*side*20" in js, "right shoulder socket must sit on the same side as its target"

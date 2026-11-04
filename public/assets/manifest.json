@@ -12,35 +12,35 @@
   "hands": 3,
   "items": [
     {
-      "file": "assets/ghost/items/0.svg",
+      "file": "assets/ghost/items/0.png",
       "pivotX": 50,
       "pivotY": 50,
       "dangles": false,
       "glowColor": "#fda4af"
     },
     {
-      "file": "assets/ghost/items/1.svg",
+      "file": "assets/ghost/items/1.png",
       "pivotX": 50,
       "pivotY": 50,
       "dangles": false,
       "glowColor": "#fde68a"
     },
     {
-      "file": "assets/ghost/items/2.svg",
+      "file": "assets/ghost/items/2.png",
       "pivotX": 50,
       "pivotY": 50,
       "dangles": false,
       "glowColor": "#fca5a5"
     },
     {
-      "file": "assets/ghost/items/3.svg",
+      "file": "assets/ghost/items/3.png",
       "pivotX": 50,
       "pivotY": 50,
       "dangles": true,
       "glowColor": "#93c5fd"
     },
     {
-      "file": "assets/ghost/items/4.svg",
+      "file": "assets/ghost/items/4.png",
       "pivotX": 50,
       "pivotY": 50,
       "dangles": true,

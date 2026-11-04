@@ -2,9 +2,9 @@ const MIMES=["Shy Peek","Happy Hop","Slow Sway","Curious Tilt","Offering Bow","J
 const TINTS=["#f8fafc","#fda4af","#93c5fd","#86efac","#fde68a"],EYE_NAMES=["Soft Wonder","Happy Arc","Wide Curious","Peaceful Slumber","Cozy Starry","Wink","Hearts","Dizzy Spiral","Sleepy","Big Sparkle"],ITEMS=["","🌸","⭐","🍄","🔮","🕯️"],HATS=["","🎩","🌿","👑","🧢","🌙","🧙","🍄","😇","🏴\u200d☠️","🌻"],HAIR_STYLES=["None","Tuft","Bob","Long flow","Spiky","Bun"],ARM_GESTURES=["Auto (mime)","Spooky wave","Hug","Chuckle","Offering","Droop"],HAIR_COLORS=["#fef9c3","#fda4af","#93c5fd","#4ade80","#1f2937"];
 const SEG=[9,10,11,11],RAD=[28,31,28,23,14],ENV_WIND=[.12,.05,.3,.8,.5,.35],ENV_DAMP=[.90,.94,.84,.92,.9,.88],PART_N=[45,50,60,70,80,55];
 const $=s=>document.querySelector(s),stage=$("#stage"),canvas=$("#world");let ctx=canvas.getContext("2d");
-const CUST={bodyColor:"#f8fafc",hairColor:"#fef9c3",hair:1,eyes:0,item:0,hat:0,gesture:0,mustache:false,beard:false};
+const CUST={bodyColor:"#f8fafc",hairColor:"#fef9c3",hair:1,eyes:0,item:0,hat:0,gesture:0};
 const HAIR_FILES=["tuft","bob","long","spiky","bun"];
-let bgImgs=[],bgFar=[],bgFg=[],bgNear=[],parX=0,parY=0,sid=location.hash.slice(1)||null,souls=[],wisps=new Map(),hostWisp=null,beat=0,beatT=0,mouse={x:-999,y:-999},particles=[],pair=null,orbs=[],dragWisp=null,eyeImgs=[],itemImgs=[],hatImgs=[],fx=[],gust=0;
+let orbImgs=[],bgImgs=[],bgFar=[],bgFg=[],bgNear=[],parX=0,parY=0,sid=location.hash.slice(1)||null,souls=[],wisps=new Map(),hostWisp=null,beat=0,beatT=0,mouse={x:-999,y:-999},particles=[],pair=null,orbs=[],dragWisp=null,eyeImgs=[],itemImgs=[],hatImgs=[],fx=[],gust=0;
 function toast(m){$("#toast").textContent=m}
 function visitorToken(){let t=localStorage.getItem("wispn_token");if(!t){t=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");localStorage.setItem("wispn_token",t)}return t}
 function myVid(){return +(localStorage.getItem("wispn_my_vid")||0)}
@@ -30,7 +30,7 @@ function applyGesture(pp,w,t){const g=w.soul.arm_gesture||0;if(!g)return pp;cons
  if(g===2)return{...pp,handL:[16,-2],handR:[-16,-2]};
  if(g===3)return{...pp,handL:[-7,3+2*sn],handR:[8,2-2*sn]};
  if(g===4)return{...pp,handL:[-12,16],handR:[12,16]};
- return{...pp,handL:[-26,28],handR:[26,28]}}
+ return{...pp,handL:[-20,48+3*sn],handR:[20,48-3*sn]}}
 function pose(w,t){const s=w.soul;if(w.forceMime!=null)return applyGesture(poseForMime(w,t,w.forceMime),w,t);const cur=applyGesture(poseForMime(w,t,s.mime_seq[beat%3]),w,t);const frac=beatT/1.2;if(frac<0.75)return cur;const nxt=applyGesture(poseForMime(w,t,s.mime_seq[(beat+1)%3]),w,t);let u=(frac-0.75)/0.25;u=u*u*(3-2*u);const mix=(a,b)=>a+(b-a)*u,arr=(a,b)=>[mix(a[0],b[0]),mix(a[1],b[1])];return{...cur,ox:mix(cur.ox||0,nxt.ox||0),oy:mix(cur.oy||0,nxt.oy||0),rot:mix(cur.rot||0,nxt.rot||0),sx:mix(cur.sx||1,nxt.sx||1),sy:mix(cur.sy||1,nxt.sy||1),seg:mix(cur.seg||1,nxt.seg||1),headTilt:mix(cur.headTilt||0,nxt.headTilt||0),blush:mix(cur.blush||.35,nxt.blush||.35),handL:arr(cur.handL,nxt.handL),handR:arr(cur.handR,nxt.handR),flare:nxt.flare,twirl:nxt.twirl,twirlSin:nxt.twirlSin}}
 function stepWisp(w,t,dt){const p=pose(w,t),home=w.fly?null:{x:w.homeX+((p.ox||0)+(w.pairOx||0))*w.scale,y:w.homeY+(p.oy||0)*w.scale};let tx,ty;
  if(w.fly){const f=w.fly,e=Math.min(1,(performance.now()-f.t0)/850),ee=e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2;tx=f.x0+(f.cx-f.x0)*ee+(f.x1-f.cx)*ee*ee;ty=f.y0+(f.cy-f.y0)*ee+(f.y1-f.cy)*ee*ee - Math.sin(ee*Math.PI)*24;if(e>=1){w.state="INTERACTING";w.fly=null;if(pair){pair.since=performance.now();if(pair.autoFx!=null&&pair.effect==null){pair.effect=pair.autoFx;pair.burstDone=false}}}}else if(dragWisp===w){tx=mouse.x;ty=mouse.y}else{tx=home.x;ty=home.y}
@@ -88,11 +88,6 @@ function getFaceTexture(style,closed=false){const img=eyeImgs[style];const key=s
 
 let hairImgs={},facialImgs={},hairShapeImgs={},tintCache={};
 function getTinted(img,color){if(!img||!img.complete||!img.naturalWidth)return null;const key=img.src+"|"+color;if(tintCache[key])return tintCache[key];const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;const g=c.getContext("2d");g.drawImage(img,0,0);g.globalCompositeOperation="source-in";g.fillStyle=color;g.fillRect(0,0,c.width,c.height);tintCache[key]=c;return c}
-function drawFacialHair(w){const s=w.soul,f=s.facial||0;if(!f)return;const color=s.hairColor||HAIR_COLORS[((s.hair||0)>>4)%5],colIdx=((s.hair||0)>>4)%5,n=w.nodes,k=w.scale;
- ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0));ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
- if(f&1){const mi=getTinted(facialImgs["m_"+colIdx],color);if(mi)ctx.drawImage(mi,-16*k,3*k,32*k,11*k)}
- if(f&2){const bi=getTinted(facialImgs["b_"+colIdx],color);if(bi)ctx.drawImage(bi,-17*k,6*k,34*k,22*k)}
- ctx.restore()}
 function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{pts,hem}=contour(w);
  const headTan={x:n[1].x-n[0].x,y:n[1].y-n[0].y},htl=Math.hypot(headTan.x,headTan.y)||1,hx=headTan.x/htl,hy=headTan.y/htl,px=-hy,py=hx;
  const headArc=[0,.25,.5,.75,1].map(f=>{const a=f*Math.PI;return{x:n[0].x+(px*Math.cos(a)-hx*Math.sin(a))*RAD[0]*k,y:n[0].y+(py*Math.cos(a)-hy*Math.sin(a))*RAD[0]*k}});
@@ -120,7 +115,7 @@ function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{p
  const grad=ctx.createLinearGradient(n[0].x,n[0].y-26*k,n[4].x,n[4].y);grad.addColorStop(0,tint);grad.addColorStop(1,tint+"66");ctx.globalAlpha=.95;ctx.fillStyle=grad;ctx.fill(path);ctx.globalAlpha=1;
  const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
  ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
- ctx.save();ctx.scale(w.gaze.x>5?.82:1,1);const isBlinking=blinkAge>=0&&blinkAge<1;const faceTex=getFaceTexture(w.forceEye!=null?w.forceEye:(s.appearance&15)%10,isBlinking);ctx.drawImage(faceTex,-26*k,-13*k,52*k,26*k);ctx.restore();ctx.restore();drawFacialHair(w);
+ ctx.save();ctx.scale(w.gaze.x>5?.82:1,1);const isBlinking=blinkAge>=0&&blinkAge<1;const faceTex=getFaceTexture(w.forceEye!=null?w.forceEye:(s.appearance&15)%10,isBlinking);ctx.drawImage(faceTex,-26*k,-13*k,52*k,26*k);ctx.restore();ctx.restore();
  const hatIdx=(s.item_and_hat&15)%11;if(hatIdx){ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(-w.gaze.x*.2*k,-24*k+Math.max(-2,Math.min(4,w.hatSpring.y)));const hi=hatImgs[hatIdx-1];ctx.font=`${22*k}px system-ui`;ctx.textAlign="center";if(hi&&hi.complete)ctx.drawImage(hi,-13*k,-22*k,26*k,26*k);else ctx.fillText(HATS[hatIdx],0,0);ctx.restore()}
  drawArm(1,handWorld(p.handR,1),false);const frontSol=drawArm(-1,handWorld(p.handL,-1),true);
  const itemIdx=(s.item_and_hat>>4)%6;if(itemIdx){const dangles=itemIdx>=4;ctx.save();ctx.translate(frontSol.hx,frontSol.hy);ctx.rotate(dangles?w.pend:(Math.atan2(frontSol.hy-frontSol.ey,frontSol.hx-frontSol.ex)+.78));const ii=itemImgs[itemIdx-1];if(ii&&ii.complete)ctx.drawImage(ii,-11*k,0,22*k,22*k);else{ctx.font=`${16*k}px system-ui`;ctx.textAlign="center";ctx.fillText(ITEMS[itemIdx],0,14*k)}ctx.restore();
@@ -161,7 +156,7 @@ function frameBody(now){const t=now/1000,dt=Math.min(.05,(now-lastT)/1000||.016)
  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);drawEnv(t);
  drawProps(t);
 const list=allWisps().sort((a,b)=>a.nodes[0].y-b.nodes[0].y);for(const w of list){if(!w.homeX){w.homeX=w.nodes[0].x;w.homeY=w.nodes[0].y}stepWisp(w,t,dt);if(w.rip>0)w.rip-=.02;drawWisp(w,t)}drawFx(dt);
- if(pair&&orbs.length){for(const o of orbs){o.y+=Math.sin(t*2+o.i)*.3;ctx.fillStyle="rgba(253,224,171,.92)";ctx.beginPath();ctx.arc(o.x,o.y,21,0,7);ctx.fill();ctx.strokeStyle="rgba(255,223,148,.9)";ctx.lineWidth=2;ctx.stroke();ctx.fillStyle="#7c2d12";ctx.font="16px system-ui";ctx.textAlign="center";ctx.fillText(o.icon,o.x,o.y+5)}}}
+ if(pair&&orbs.length){for(const o of orbs){o.y+=Math.sin(t*2+o.i)*.3;const oi=orbImgs[o.i];if(oi&&oi.complete&&oi.naturalWidth)ctx.drawImage(oi,o.x-24,o.y-24,48,48);else{ctx.fillStyle="rgba(253,224,171,.92)";ctx.beginPath();ctx.arc(o.x,o.y,21,0,7);ctx.fill();ctx.strokeStyle="rgba(255,223,148,.9)";ctx.lineWidth=2;ctx.stroke();ctx.fillStyle="#7c2d12";ctx.font="16px system-ui";ctx.textAlign="center";ctx.fillText(o.icon,o.x,o.y+5)}}}}
 async function load(){if(!sid){$("#empty").hidden=false;return}$("#empty").hidden=true;const h={};const sec=hostSecret();if(sec)h["X-Host-Secret"]=sec;let r=await fetch(`/api/s/${sid}`,{headers:h});
  if(r.status===404){const sec2=hostSecret();
   if(sec2){const cr=await fetch("/api/sanctuaries",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({host_secret:sec2,env_id:window._env||0,host_ghost:window._hostGhost||[0x01,0,0,1,2,1,0]})});const cj=await cr.json().catch(()=>({}));
@@ -170,7 +165,7 @@ async function load(){if(!sid){$("#empty").hidden=false;return}$("#empty").hidde
 window._env=p.env;window._hostGhost=p.hostGhost;souls=p.souls;syncWisps();makeParticles();$("#roleBadge").textContent=isHost()?"host":"visitor";$("#roleBadge").classList.toggle("host",isHost());$("#envWrap").hidden=!isHost();$("#envSel").value=p.env}
 async function createSanctuary(env){const secret=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");const r=await fetch("/api/sanctuaries",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({host_secret:secret,env_id:env||0,host_ghost:[0x01,0,0,1,2,1,0]})});const j=await r.json();if(!r.ok){toast(j.error||"create failed");return}localStorage.setItem("wispn_host_"+j.id,secret);sid=j.id;location.hash=sid;await load();return sid}
 function currentSoul(){const nearest=(hex,arr)=>{let best=0,bd=1e12;const v=parseInt(hex.slice(1),16);arr.forEach((c,i)=>{const w=parseInt(c.slice(1),16),d=((v>>16)-(w>>16))**2+(((v>>8)&255)-((w>>8)&255))**2+((v&255)-(w&255))**2;if(d<bd){bd=d;best=i}});return best};
- return{visitor_id:myVid()||999999,appearance:(nearest(CUST.bodyColor,TINTS)<<4)|CUST.eyes,item_and_hat:(CUST.item<<4)|CUST.hat,mime_seq:[+$("#fBeat0").value,+$("#fBeat1").value,+$("#fBeat2").value],mime_tempo:+$("#fTempo").value,arm_gesture:CUST.gesture,facial:(CUST.mustache?1:0)|(CUST.beard?2:0),packed_tempo:(+$("#fTempo").value)|(CUST.gesture<<2)|(((CUST.mustache?1:0)|(CUST.beard?2:0))<<5),host_react:0,hair:(nearest(CUST.hairColor,HAIR_COLORS)<<4)|CUST.hair,bodyColor:CUST.bodyColor,hairColor:CUST.hairColor}}
+ return{visitor_id:myVid()||999999,appearance:(nearest(CUST.bodyColor,TINTS)<<4)|CUST.eyes,item_and_hat:(CUST.item<<4)|CUST.hat,mime_seq:[+$("#fBeat0").value,+$("#fBeat1").value,+$("#fBeat2").value],mime_tempo:+$("#fTempo").value,arm_gesture:CUST.gesture,facial:0,packed_tempo:(+$("#fTempo").value)|(CUST.gesture<<2),host_react:0,hair:(nearest(CUST.hairColor,HAIR_COLORS)<<4)|CUST.hair,bodyColor:CUST.bodyColor,hairColor:CUST.hairColor}}
 let heroWisp=null;const closetImg=new Image();closetImg.src="/assets/ui/closet.jpg";
 function openLimbo(){$("#limbo").hidden=false;$("#envWrap").hidden=!(isHost()||pendingNew||!sid);heroWisp=makeWisp(currentSoul(),180,180,2);heroWisp.homeX=180;heroWisp.homeY=180;drawHero()}
 function drawHero(){if($("#limbo").hidden||!heroWisp)return;const hctx=$("#hero").getContext("2d");heroWisp.soul=currentSoul();heroWisp.gaze.tx=Math.max(-8,Math.min(8,(mouse.x-180)*.04));heroWisp.gaze.ty=Math.max(-5,Math.min(5,(mouse.y-180)*.04));stepWisp(heroWisp,performance.now()/1000,.016);hctx.clearRect(0,0,360,360);if(closetImg.complete&&closetImg.naturalWidth){const sc=Math.max(360/closetImg.naturalWidth,360/closetImg.naturalHeight);hctx.drawImage(closetImg,(360-closetImg.naturalWidth*sc)/2,(360-closetImg.naturalHeight*sc)/2,closetImg.naturalWidth*sc,closetImg.naturalHeight*sc);hctx.fillStyle="rgba(20,12,30,.18)";hctx.fillRect(0,0,360,360)}else{hctx.fillStyle="#241d3d";hctx.fillRect(0,0,360,360)}const worldCtx=ctx;ctx=hctx;drawWisp(heroWisp,performance.now()/1000);ctx=worldCtx;requestAnimationFrame(drawHero)}
@@ -202,19 +197,15 @@ addEventListener("hashchange",()=>{sid=location.hash.slice(1)||null;load()});
  const eyePaths=[0,1,2,3,4,5,6,7,8,9].map(i=>`/assets/ghost/eyes/${i}.svg`);const itemPaths=man?.items?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/items/${i}.svg`);const hatPaths=man?.hats?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/hats/${i}.svg`);
  bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));bgFar=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_far.jpg`));bgFg=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fg2.png`));bgNear=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fgapi.png`));eyeImgs=loadImgs(eyePaths);
 
- for(let ci=0;ci<5;ci++){const a=new Image();a.src=`/assets/ghost/facial/mustache_${ci}.svg`;facialImgs["m_"+ci]=a;const b=new Image();b.src=`/assets/ghost/facial/beard_${ci}.svg`;facialImgs["b_"+ci]=b}itemImgs=loadImgs(itemPaths);hatImgs=loadImgs(hatPaths);window._manifest=man;
+itemImgs=loadImgs(itemPaths);hatImgs=loadImgs(hatPaths);orbImgs=loadImgs([0,1,2,3,4].map(i=>`/assets/ui/orb${i}.png`));window._manifest=man;
  const fill=(sel,arr)=>sel.replaceChildren(...arr.map((v,i)=>new Option(v,i)));["#fBeat0","#fBeat1","#fBeat2"].forEach((s2,i)=>{fill($(s2),MIMES);$(s2).value=i});
  const cards=(el,items,render,get,set)=>{el.replaceChildren(...items.map((it,i)=>{const b=document.createElement("button");b.className="card"+(get()===i?" sel":"");b.innerHTML=render(it,i);b.onclick=()=>{set(i);cards(el,items,render,get,set);if(heroWisp)heroWisp.soul=currentSoul()};return b}))};
- cards($("#eyeCards"),EYE_NAMES,(v,i)=>`<img src="/assets/ghost/eyes/${i}.svg"><span>${v}</span>`,()=>CUST.eyes,v=>CUST.eyes=v);
+ cards($("#eyeCards"),EYE_NAMES,(v,i)=>`<span class="eyePrev"><img src="/assets/ghost/eyes/${i}.svg"></span><span>${v}</span>`,()=>CUST.eyes,v=>CUST.eyes=v);
  cards($("#hatCards"),HATS,(v,i)=>i?`<img src="/assets/ghost/hats/${i-1}.png" style="width:52px;height:52px;object-fit:contain"><span>${"Hat "+i}</span>`:`<span style="font-size:1.3rem">—</span><span>None</span>`,()=>CUST.hat,v=>CUST.hat=v);
- cards($("#itemCards"),ITEMS,(v,i)=>`<span style="font-size:1.3rem">${v||"—"}</span><span>${i?"Item "+i:"None"}</span>`,()=>CUST.item,v=>CUST.item=v);
+ cards($("#itemCards"),ITEMS,(v,i)=>i?`<img src="/assets/ghost/items/${i-1}.png" style="width:52px;height:52px;object-fit:contain"><span>${"Item "+i}</span>`:`<span style="font-size:1.3rem">—</span><span>None</span>`,()=>CUST.item,v=>CUST.item=v);
  cards($("#gestureCards"),ARM_GESTURES,v=>`<span>${v}</span>`,()=>CUST.gesture,v=>CUST.gesture=v);
  const swatches=(el,pick)=>{const cols=["#f8fafc","#fda4af","#93c5fd","#86efac","#fde68a","#1f2937","#fb923c","#c084fc"];el.replaceChildren(...cols.map(c=>{const b=document.createElement("button");b.className="sw";b.style.background=c;b.onclick=()=>pick(c);return b}))};
  swatches($("#bodySwatches"),c=>{$("#bodyColor").value=c;CUST.bodyColor=c;if(heroWisp)heroWisp.soul=currentSoul()});
- swatches($("#hairSwatches"),c=>{$("#hairColor").value=c;CUST.hairColor=c;if(heroWisp)heroWisp.soul=currentSoul()});
  $("#bodyColor").addEventListener("input",e=>{CUST.bodyColor=e.target.value;if(heroWisp)heroWisp.soul=currentSoul()});
- $("#hairColor").addEventListener("input",e=>{CUST.hairColor=e.target.value;if(heroWisp)heroWisp.soul=currentSoul()});
- $("#mustBtn").onclick=e=>{CUST.mustache=!CUST.mustache;e.target.classList.toggle("sel",CUST.mustache);if(heroWisp)heroWisp.soul=currentSoul()};
- $("#beardBtn").onclick=e=>{CUST.beard=!CUST.beard;e.target.classList.toggle("sel",CUST.beard);if(heroWisp)heroWisp.soul=currentSoul()};
- if(new URLSearchParams(location.search).has("limbo"))openLimbo();window._env=0;makeParticles();requestAnimationFrame(frame);await load()})();
+    if(new URLSearchParams(location.search).has("limbo"))openLimbo();window._env=0;makeParticles();requestAnimationFrame(frame);await load()})();
 
