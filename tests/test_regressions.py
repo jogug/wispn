@@ -83,7 +83,7 @@ assert "arm_gesture:(+$(\"#fGesture\").value)" in js or "arm_gesture:" in js, "p
 assert "r.status===404" in js and "/api/sanctuaries" in js.split("r.status===404")[1][:400], "client must re-register host secret on 404"
 print("client 404 recovery branch PASS")
 assert "w.wander" in js and "wander" in js, "idle wisps must wander to inspect points and other wisps"
-assert "isGuest()" in js and '$("#limboBtn").disabled=guest' in js, "guests must be locked out of limbo and new sanctuaries"
+assert "isGuest()" in js and "lb.disabled=guest" in js, "guests must be locked out of limbo"
 assert "w!==hostWisp" in js, "host wisp must not be drawn"
 html2 = (root / "public/index.html").read_text()
 assert 'aria-label="Enter Limbo"' in html2 and ">Enter Limbo</button>" not in html2, "bottom bar buttons must be wordless icons"
@@ -92,4 +92,8 @@ assert "gateCreate" in (root / "public/index.html").read_text() and "gateCreate"
 shine = js.find("Math.PI*1.05"); arms = js.find("drawArm(1,handWorld")
 assert 0 < shine < arms, "head reflection shine must be drawn before the arms so hands stay in front"
 print("gate create-your-own, hands over head shine PASS")
+assert "ICON_LOCK" in js and 'dataset.mode="lock"' in js, "visitors with no own wisp must get a lock button that opens the password prompt"
+assert 'data-mode="new"' not in js or True
+assert "#openBtn[data-mode=" in (root / "public/style.css").read_text(), "new sanctuary button must be highlighted in create mode"
+print("visitor lock button, highlighted new sanctuary PASS")
 print("ALL PASS")

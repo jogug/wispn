@@ -306,3 +306,7 @@ Sanctuary passwords: creating a sanctuary requires a password, checked on the fr
 ## 16. Direct-open gate with create-your-own, hands over head shine (latest)
 
 Opening a sanctuary link directly now lands on the unlock gate first (checked once on first load, not re-raised by later refreshes): password to become host, a create-your-own button beside it that opens Limbo in new-sanctuary mode starting at the Biome picker, and a just-visit eye. In the wisp renderer, the head shine arc is drawn before the arms, so hands and held items stay in front of the head reflection.
+
+## 17. Visitor lock button, highlighted New Sanctuary (latest)
+
+A visitor with no wisp of their own in the open sanctuary no longer sees the ghost button: it becomes a lock that opens the password prompt (deep links into Limbo reroute there too). Hosts keep the ghost, guests keep it disabled. The New Sanctuary button is highlighted in create mode with the amber primary gradient and a soft gold pulse (stilled under prefers-reduced-motion); in visit mode it returns to teal.
