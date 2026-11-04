@@ -4,7 +4,7 @@ const SEG=[9,10,11,11],RAD=[28,31,28,23,14],ENV_WIND=[.12,.05,.3,.8,.5,.35],ENV_
 const $=s=>document.querySelector(s),stage=$("#stage"),canvas=$("#world");let ctx=canvas.getContext("2d");
 const CUST={bodyColor:"#f8fafc",hairColor:"#fef9c3",hair:1,eyes:0,item:0,hat:0,gesture:0,mustache:false,beard:false};
 const HAIR_FILES=["tuft","bob","long","spiky","bun"];
-let bgImgs=[],bgFar=[],bgFg=[],parX=0,parY=0,sid=location.hash.slice(1)||null,souls=[],wisps=new Map(),hostWisp=null,beat=0,beatT=0,mouse={x:-999,y:-999},particles=[],pair=null,orbs=[],dragWisp=null,eyeImgs=[],itemImgs=[],hatImgs=[],fx=[],kelp=[],gust=0;
+let bgImgs=[],bgFar=[],bgFg=[],bgNear=[],parX=0,parY=0,sid=location.hash.slice(1)||null,souls=[],wisps=new Map(),hostWisp=null,beat=0,beatT=0,mouse={x:-999,y:-999},particles=[],pair=null,orbs=[],dragWisp=null,eyeImgs=[],itemImgs=[],hatImgs=[],fx=[],kelp=[],gust=0;
 function toast(m){$("#toast").textContent=m}
 function visitorToken(){let t=localStorage.getItem("wispn_token");if(!t){t=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");localStorage.setItem("wispn_token",t)}return t}
 function myVid(){return +(localStorage.getItem("wispn_my_vid")||0)}
@@ -50,6 +50,8 @@ function stepWisp(w,t,dt){const p=pose(w,t),home=w.fly?null:{x:w.homeX+((p.ox||0
   w.tailAnchors=anchors}
  gust=(window._env===3)?Math.max(0,Math.sin(t*(2*Math.PI/4.5)))*( (t%4.5)<1.2?1:0.15):0;
  if(w.fly&&Math.random()<.6)fx.push({x:n[4].x,y:n[4].y,vx:(Math.random()-.5)*.6,vy:.4+Math.random()*.5,life:1,c:"#fef9c3",r:2});
+ if(pair&&!pair.effect&&(pair.a===w||pair.b===w)){const o=pair.a===w?pair.b:pair.a,midx=(n[0].x+o.nodes[0].x)/2,midy=(n[0].y+o.nodes[0].y)/2,dirx=Math.sign(o.nodes[0].x-n[0].x)||1;
+  w.pairOx=dirx*7+Math.sin(t*2.2)*2;w.pairHands={L:{x:midx-dirx*4,y:midy-6+Math.sin(t*3.1)*3},R:{x:midx+dirx*4,y:midy-2+Math.cos(t*3.1)*3}};w.pose.oy=(w.pose.oy||0)+Math.sin(t*3.1+(pair.b===w?Math.PI:0))*2.5}
  if(pair&&pair.effect!=null){const el=performance.now()-pair.since,o=pair.a===w?pair.b:pair.a;
   if(el<2600){const midx=(n[0].x+o.nodes[0].x)/2,midy=(n[0].y+o.nodes[0].y)/2,dirx=Math.sign(o.nodes[0].x-n[0].x)||1;
    if(pair.effect===0){w.pairOx=dirx*18+Math.sin(el*.004)*4;w.pairHands={L:{x:o.nodes[1].x-14,y:o.nodes[1].y},R:{x:o.nodes[1].x+14,y:o.nodes[1].y}};if(Math.random()<.08)fx.push({x:midx,y:midy-20,vx:(Math.random()-.5)*.8,vy:-.7,life:1,c:"#fda4af",r:3,heart:true})}
@@ -151,7 +153,7 @@ function fadedFg(img){if(!img||!img.complete||!img.naturalWidth)return null;if(f
 function drawEnv(t){const W=canvas.clientWidth,H=canvas.clientHeight,e=window._env||0;
  const tx=(mouse.x/W-.5)||0,ty=(mouse.y/H-.5)||0;parX+=(tx-parX)*.03;parY+=(ty-parY)*.03;
  const drift=Math.sin(t*.07)*5;
- if(bgFar[e]&&bgFar[e].complete){cover(bgFar[e],W,H,-parX*6+drift*.3,-parY*3,1.08);cover(bgImgs[e],W,H,-parX*13+drift*.6,-parY*6,1.07);ctx.fillStyle="rgba(8,10,22,.10)";ctx.fillRect(0,0,W,H)}
+ if(bgFar[e]&&bgFar[e].complete){cover(bgFar[e],W,H,-parX*6+Math.sin(t*.021)*7,-parY*3+Math.cos(t*.017)*3,1.08);cover(bgImgs[e],W,H,-parX*13-Math.sin(t*.016)*9,-parY*6-Math.cos(t*.013)*4,1.07);ctx.fillStyle="rgba(8,10,22,.10)";ctx.fillRect(0,0,W,H)}
  else{const skies=[["#071714","#13382e","#0a2019"],["#fdf6f0","#f7d6e0","#c8d9f8"],["#16697a","#0b3a54","#061a2e"],["#140d26","#8c3b2b","#d97f38"],["#0f203c","#4b3d60","#e8f1fc"],["#ff6b6b","#feca57","#2e1f47"]][e];const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,skies[0]);g.addColorStop(.55,skies[1]);g.addColorStop(1,skies[2]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
  ctx.fillStyle="rgba(255,255,255,.75)";if(e===3||e===4)for(let i=0;i<50;i++)ctx.fillRect((i*97)%W,(i*57)%(H*.5),1.6,1.6);
  if(e===3){ctx.fillStyle="#fef3c7";ctx.beginPath();ctx.arc(W*.82,H*.16,26,0,7);ctx.fill()}
@@ -168,7 +170,7 @@ function frameBody(now){const t=now/1000,dt=Math.min(.05,(now-lastT)/1000||.016)
  if(canvas.clientWidth&&canvas.width!==canvas.clientWidth*devicePixelRatio){canvas.width=canvas.clientWidth*devicePixelRatio;canvas.height=canvas.clientHeight*devicePixelRatio}
  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);drawEnv(t);
  drawProps(t);
-function drawForeground(){const W=canvas.clientWidth,H=canvas.clientHeight,img=bgFg[window._env||0];if(!img||!img.complete||!img.naturalWidth)return;const dw=W*1.08,dh=dw*img.naturalHeight/img.naturalWidth;ctx.drawImage(img,-parX*38-dw*.04,H-dh+4,dw,Math.max(dh,H*.42))}
+function drawForeground(){const W=canvas.clientWidth,H=canvas.clientHeight,img=bgFg[window._env||0];if(!img||!img.complete||!img.naturalWidth)return;const dw=W*1.08,dh=dw*img.naturalHeight/img.naturalWidth;ctx.drawImage(img,-parX*38-dw*.04+Math.sin(performance.now()*.00011)*8,H-dh+4,dw,Math.max(dh,H*.42));const near=bgNear[window._env||0];if(near&&near.complete&&near.naturalWidth){const nw=W*1.12,nh=nw*near.naturalHeight/near.naturalWidth;ctx.globalAlpha=.96;ctx.drawImage(near,-parX*52-nw*.05-Math.sin(performance.now()*.00013)*10,H-nh+6,nw,nh);ctx.globalAlpha=1}}
 const list=allWisps().sort((a,b)=>a.nodes[0].y-b.nodes[0].y);for(const w of list){if(!w.homeX){w.homeX=w.nodes[0].x;w.homeY=w.nodes[0].y}stepWisp(w,t,dt);if(w.rip>0)w.rip-=.02;drawWisp(w,t)}drawFx(dt);drawForeground();
  if(pair&&orbs.length){for(const o of orbs){o.y+=Math.sin(t*2+o.i)*.3;ctx.fillStyle="rgba(253,224,171,.92)";ctx.beginPath();ctx.arc(o.x,o.y,15,0,7);ctx.fill();ctx.fillStyle="#7c2d12";ctx.font="13px system-ui";ctx.textAlign="center";ctx.fillText(o.icon,o.x,o.y+5)}}}
 async function load(){if(!sid){$("#empty").hidden=false;return}$("#empty").hidden=true;const h={};const sec=hostSecret();if(sec)h["X-Host-Secret"]=sec;let r=await fetch(`/api/s/${sid}`,{headers:h});
@@ -209,7 +211,7 @@ $("#hero").addEventListener("pointermove",e=>{const r=e.target.getBoundingClient
 addEventListener("hashchange",()=>{sid=location.hash.slice(1)||null;load()});
 (async()=>{let man=null;try{man=await(await fetch("/assets/manifest.json")).json()}catch{}
  const eyePaths=[0,1,2,3,4,5,6,7,8,9].map(i=>`/assets/ghost/eyes/${i}.svg`);const itemPaths=man?.items?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/items/${i}.svg`);const hatPaths=man?.hats?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/hats/${i}.svg`);
- bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));bgFar=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_far.jpg`));bgFg=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fg2.png`));eyeImgs=loadImgs(eyePaths);
+ bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));bgFar=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_far.jpg`));bgFg=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fg2.png`));bgNear=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fgapi.png`));eyeImgs=loadImgs(eyePaths);
  for(const nm of HAIR_FILES){const im=new Image();im.src=`/assets/ghost/hair/${nm}.png`;hairShapeImgs[nm]=im}
  for(let ci=0;ci<5;ci++){const a=new Image();a.src=`/assets/ghost/facial/mustache_${ci}.svg`;facialImgs["m_"+ci]=a;const b=new Image();b.src=`/assets/ghost/facial/beard_${ci}.svg`;facialImgs["b_"+ci]=b}itemImgs=loadImgs(itemPaths);hatImgs=loadImgs(hatPaths);window._manifest=man;
  const fill=(sel,arr)=>sel.replaceChildren(...arr.map((v,i)=>new Option(v,i)));["#fBeat0","#fBeat1","#fBeat2"].forEach((s2,i)=>{fill($(s2),MIMES);$(s2).value=i});
