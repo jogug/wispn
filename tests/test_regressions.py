@@ -116,4 +116,6 @@ print("visitor lock button, highlighted new sanctuary PASS")
 assert '$("#roleBadge").hidden=isHost()' in js, "host badge must not be displayed"
 assert "if(isHost()||(own&&own!==sid))" in js, "hosts must get the visit button instead of new sanctuary"
 print("host badge hidden, host visit button PASS")
+assert "visitGate" in (root / "public/index.html").read_text() and "visitGo" in js and "[0-9a-f]{16}" in js, "visit button must open a window that parses a sanctuary link"
+print("visit window PASS")
 print("ALL PASS")

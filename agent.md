@@ -316,3 +316,7 @@ Bug fix: unlocking a sanctuary created before passwords (or restored by the 404 
 ## 18. Host presentation (latest)
 
 The role badge is hidden entirely for hosts (guests and visitors keep theirs). As host, the sanctuary button is always the wordless visit button: it jumps to your own sanctuary from elsewhere, and inside your own sanctuary it simply closes Limbo instead of starting another creation.
+
+## 19. Visit window (latest)
+
+The visit button now opens a small window in the same style as the unlock gate: paste someone else's sanctuary link (or bare ID), press go, and the app extracts the 16-hex sanctuary ID and loads it. Invalid input gets a toast instead of a broken navigation.

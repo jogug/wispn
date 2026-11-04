@@ -159,3 +159,7 @@ input[type=range]{min-height:48px;accent-color:#f0a832}
 #bottomBar #openBtn[data-mode="new"]{background:linear-gradient(180deg,#ffc95e,#f0a832);border-color:#ffdf94;color:#2a1c04;box-shadow:0 0 0 2px rgba(245,196,81,.4),0 6px 20px rgba(240,168,50,.4);animation:pulseGold 2.2s ease-in-out infinite}
 @keyframes pulseGold{0%,100%{box-shadow:0 0 0 2px rgba(245,196,81,.35),0 6px 18px rgba(240,168,50,.3)}50%{box-shadow:0 0 0 5px rgba(245,196,81,.22),0 6px 22px rgba(240,168,50,.5)}}
 @media (prefers-reduced-motion:reduce){#bottomBar #openBtn[data-mode="new"]{animation:none}}
+
+#visitGate{position:fixed;inset:0;z-index:40;background:rgba(5,12,9,.6);display:flex;align-items:center;justify-content:center;padding:1rem}
+#visitGate[hidden]{display:none}
+#visitUrl{width:100%;min-height:56px;border-radius:999px;border:2px solid #4a7a5c;background:#10241a;color:#e7f5ec;padding:.6rem 1rem;font-size:1rem;margin:.6rem 0}
