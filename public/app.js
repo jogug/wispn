@@ -94,7 +94,7 @@ function drawHairAsset(w,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)r
  hs.v+=((-headVx*.012)-hs.r*130-hs.v*9)*.016;hs.r+=hs.v*.016;
  const sway=hs.r+Math.sin(performance.now()*.0022+w.phase)*.045,bobY=Math.sin(performance.now()*.003+w.phase)*1.6*k;
  ctx.save();ctx.translate(n[0].x,n[0].y+bobY);ctx.rotate(rig.headAngle+(w.pose?w.pose.headTilt||0:0)*Math.PI/180*.5+sway);ctx.translate(0,w.hatSpring.y*.4);
- const W=(long?76:64)*k,H=W*img.height/img.width;ctx.drawImage(img,-W/2,long?-H*.72:-H*.84,W,H);ctx.restore()}
+ const HAIR_MAP=[{w:1.28,top:1.02},{w:1.16,top:.98},{w:1.34,top:1.04},{w:1.22,top:1.12},{w:1.18,top:1.34}],hm=HAIR_MAP[style-1],R=RAD[0]*k,W=2*R*hm.w,H=W*img.height/img.width;ctx.drawImage(img,-W/2,-R*hm.top,W,H);ctx.restore()}
 function drawFacialHair(w){const s=w.soul,f=s.facial||0;if(!f)return;const color=s.hairColor||HAIR_COLORS[((s.hair||0)>>4)%5],colIdx=((s.hair||0)>>4)%5,n=w.nodes,k=w.scale;
  ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0));ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
  if(f&1){const mi=getTinted(facialImgs["m_"+colIdx],color);if(mi)ctx.drawImage(mi,-16*k,3*k,32*k,11*k)}
@@ -166,7 +166,9 @@ function frame(now){try{frameBody(now)}catch(err){console.warn(err.stack||err)}r
 function frameBody(now){const t=now/1000,dt=Math.min(.05,(now-lastT)/1000||.016);lastT=now;beatT+=dt;if(beatT>=1.2){beatT=0;beat++}
  if(canvas.clientWidth&&canvas.width!==canvas.clientWidth*devicePixelRatio){canvas.width=canvas.clientWidth*devicePixelRatio;canvas.height=canvas.clientHeight*devicePixelRatio}
  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);drawEnv(t);
- drawProps(t);const list=allWisps().sort((a,b)=>a.nodes[0].y-b.nodes[0].y);for(const w of list){if(!w.homeX){w.homeX=w.nodes[0].x;w.homeY=w.nodes[0].y}stepWisp(w,t,dt);if(w.rip>0)w.rip-=.02;drawWisp(w,t)}drawFx(dt);
+ drawProps(t);
+function drawForeground(){const W=canvas.clientWidth,H=canvas.clientHeight,img=bgFg[window._env||0];if(!img||!img.complete||!img.naturalWidth)return;const dw=W*1.1,dh=dw*img.naturalHeight/img.naturalWidth;ctx.drawImage(img,-parX*38-dw*.05,H-dh+6,dw,dh)}
+const list=allWisps().sort((a,b)=>a.nodes[0].y-b.nodes[0].y);for(const w of list){if(!w.homeX){w.homeX=w.nodes[0].x;w.homeY=w.nodes[0].y}stepWisp(w,t,dt);if(w.rip>0)w.rip-=.02;drawWisp(w,t)}drawFx(dt);drawForeground();
  if(pair&&orbs.length){for(const o of orbs){o.y+=Math.sin(t*2+o.i)*.3;ctx.fillStyle="rgba(253,224,171,.92)";ctx.beginPath();ctx.arc(o.x,o.y,15,0,7);ctx.fill();ctx.fillStyle="#7c2d12";ctx.font="13px system-ui";ctx.textAlign="center";ctx.fillText(o.icon,o.x,o.y+5)}}}
 async function load(){if(!sid){$("#empty").hidden=false;return}$("#empty").hidden=true;const h={};const sec=hostSecret();if(sec)h["X-Host-Secret"]=sec;let r=await fetch(`/api/s/${sid}`,{headers:h});
  if(r.status===404){const sec2=hostSecret();
@@ -206,7 +208,7 @@ $("#hero").addEventListener("pointermove",e=>{const r=e.target.getBoundingClient
 addEventListener("hashchange",()=>{sid=location.hash.slice(1)||null;load()});
 (async()=>{let man=null;try{man=await(await fetch("/assets/manifest.json")).json()}catch{}
  const eyePaths=man?.eyes?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/eyes/${i}.svg`);const itemPaths=man?.items?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/items/${i}.svg`);const hatPaths=man?.hats?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/hats/${i}.svg`);
- bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));bgFar=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_far.jpg`));bgFg=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fg.jpg`));eyeImgs=loadImgs(eyePaths);
+ bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));bgFar=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_far.jpg`));bgFg=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fgapi.png`));eyeImgs=loadImgs(eyePaths);
  for(const nm of HAIR_FILES){const im=new Image();im.src=`/assets/ghost/hair/${nm}.png`;hairShapeImgs[nm]=im}
  for(let ci=0;ci<5;ci++){const a=new Image();a.src=`/assets/ghost/facial/mustache_${ci}.svg`;facialImgs["m_"+ci]=a;const b=new Image();b.src=`/assets/ghost/facial/beard_${ci}.svg`;facialImgs["b_"+ci]=b}itemImgs=loadImgs(itemPaths);hatImgs=loadImgs(hatPaths);window._manifest=man;
  const fill=(sel,arr)=>sel.replaceChildren(...arr.map((v,i)=>new Option(v,i)));["#fBeat0","#fBeat1","#fBeat2"].forEach((s2,i)=>{fill($(s2),MIMES);$(s2).value=i});
