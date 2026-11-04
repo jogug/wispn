@@ -172,5 +172,178 @@
     ],
     "colors": 5,
     "wire": "padding byte: style low nibble, colour high nibble"
+  },
+  "hairAssets": [
+    {
+      "style": 0,
+      "color": 0,
+      "file": "assets/ghost/hair/0_0.svg"
+    },
+    {
+      "style": 0,
+      "color": 1,
+      "file": "assets/ghost/hair/0_1.svg"
+    },
+    {
+      "style": 0,
+      "color": 2,
+      "file": "assets/ghost/hair/0_2.svg"
+    },
+    {
+      "style": 0,
+      "color": 3,
+      "file": "assets/ghost/hair/0_3.svg"
+    },
+    {
+      "style": 0,
+      "color": 4,
+      "file": "assets/ghost/hair/0_4.svg"
+    },
+    {
+      "style": 1,
+      "color": 0,
+      "file": "assets/ghost/hair/1_0.svg"
+    },
+    {
+      "style": 1,
+      "color": 1,
+      "file": "assets/ghost/hair/1_1.svg"
+    },
+    {
+      "style": 1,
+      "color": 2,
+      "file": "assets/ghost/hair/1_2.svg"
+    },
+    {
+      "style": 1,
+      "color": 3,
+      "file": "assets/ghost/hair/1_3.svg"
+    },
+    {
+      "style": 1,
+      "color": 4,
+      "file": "assets/ghost/hair/1_4.svg"
+    },
+    {
+      "style": 2,
+      "color": 0,
+      "file": "assets/ghost/hair/2_0.svg"
+    },
+    {
+      "style": 2,
+      "color": 1,
+      "file": "assets/ghost/hair/2_1.svg"
+    },
+    {
+      "style": 2,
+      "color": 2,
+      "file": "assets/ghost/hair/2_2.svg"
+    },
+    {
+      "style": 2,
+      "color": 3,
+      "file": "assets/ghost/hair/2_3.svg"
+    },
+    {
+      "style": 2,
+      "color": 4,
+      "file": "assets/ghost/hair/2_4.svg"
+    },
+    {
+      "style": 3,
+      "color": 0,
+      "file": "assets/ghost/hair/3_0.svg"
+    },
+    {
+      "style": 3,
+      "color": 1,
+      "file": "assets/ghost/hair/3_1.svg"
+    },
+    {
+      "style": 3,
+      "color": 2,
+      "file": "assets/ghost/hair/3_2.svg"
+    },
+    {
+      "style": 3,
+      "color": 3,
+      "file": "assets/ghost/hair/3_3.svg"
+    },
+    {
+      "style": 3,
+      "color": 4,
+      "file": "assets/ghost/hair/3_4.svg"
+    },
+    {
+      "style": 4,
+      "color": 0,
+      "file": "assets/ghost/hair/4_0.svg"
+    },
+    {
+      "style": 4,
+      "color": 1,
+      "file": "assets/ghost/hair/4_1.svg"
+    },
+    {
+      "style": 4,
+      "color": 2,
+      "file": "assets/ghost/hair/4_2.svg"
+    },
+    {
+      "style": 4,
+      "color": 3,
+      "file": "assets/ghost/hair/4_3.svg"
+    },
+    {
+      "style": 4,
+      "color": 4,
+      "file": "assets/ghost/hair/4_4.svg"
+    }
+  ],
+  "facialHair": {
+    "mustache": [
+      {
+        "color": 0,
+        "file": "assets/ghost/facial/mustache_0.svg"
+      },
+      {
+        "color": 1,
+        "file": "assets/ghost/facial/mustache_1.svg"
+      },
+      {
+        "color": 2,
+        "file": "assets/ghost/facial/mustache_2.svg"
+      },
+      {
+        "color": 3,
+        "file": "assets/ghost/facial/mustache_3.svg"
+      },
+      {
+        "color": 4,
+        "file": "assets/ghost/facial/mustache_4.svg"
+      }
+    ],
+    "beard": [
+      {
+        "color": 0,
+        "file": "assets/ghost/facial/beard_0.svg"
+      },
+      {
+        "color": 1,
+        "file": "assets/ghost/facial/beard_1.svg"
+      },
+      {
+        "color": 2,
+        "file": "assets/ghost/facial/beard_2.svg"
+      },
+      {
+        "color": 3,
+        "file": "assets/ghost/facial/beard_3.svg"
+      },
+      {
+        "color": 4,
+        "file": "assets/ghost/facial/beard_4.svg"
+      }
+    ]
   }
 }

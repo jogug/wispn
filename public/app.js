@@ -1,5 +1,5 @@
 const MIMES=["Shy Peek","Happy Hop","Slow Sway","Curious Tilt","Offering Bow","Joyful Twirl","Cozy Huddle","Playful Orbit"];
-const TINTS=["#f8fafc","#fda4af","#93c5fd","#86efac","#fde68a"],EYE_NAMES=["Soft Wonder","Happy Arc","Wide Curious","Peaceful Slumber","Cozy Starry"],ITEMS=["","🌸","⭐","🍄","🔮","🕯️"],HATS=["","🎩","🌿","👑","🧢","🌙"],HAIR_STYLES=["None","Tuft","Bob","Long flow","Spiky","Bun"],HAIR_COLORS=["#fef9c3","#fda4af","#93c5fd","#4ade80","#1f2937"];
+const TINTS=["#f8fafc","#fda4af","#93c5fd","#86efac","#fde68a"],EYE_NAMES=["Soft Wonder","Happy Arc","Wide Curious","Peaceful Slumber","Cozy Starry"],ITEMS=["","🌸","⭐","🍄","🔮","🕯️"],HATS=["","🎩","🌿","👑","🧢","🌙"],HAIR_STYLES=["None","Tuft","Bob","Long flow","Spiky","Bun"],ARM_GESTURES=["Auto (mime)","Spooky wave","Hug","Chuckle","Offering","Droop"],HAIR_COLORS=["#fef9c3","#fda4af","#93c5fd","#4ade80","#1f2937"];
 const SEG=[14,15,16,16],RAD=[26,28,25,20,12],ENV_WIND=[.12,.05,.3,.8,.5,.35],ENV_DAMP=[.90,.94,.84,.92,.9,.88],PART_N=[45,50,60,70,80,55];
 const $=s=>document.querySelector(s),stage=$("#stage"),canvas=$("#world");let ctx=canvas.getContext("2d");
 let bgImgs=[],sid=location.hash.slice(1)||null,souls=[],wisps=new Map(),hostWisp=null,beat=0,beatT=0,mouse={x:-999,y:-999},particles=[],pair=null,orbs=[],dragWisp=null,eyeImgs=[],itemImgs=[],hatImgs=[],fx=[],kelp=[],gust=0;
@@ -8,11 +8,11 @@ function visitorToken(){let t=localStorage.getItem("wispn_token");if(!t){t=[...c
 function myVid(){return +(localStorage.getItem("wispn_my_vid")||0)}
 function hostSecret(){return sid?localStorage.getItem("wispn_host_"+sid):null}
 function isHost(){return !!hostSecret()}
-function decodePacket(buf){const b=new Uint8Array(buf);if(b.length<10)throw new Error("short packet");const out=[];for(let i=0;i<b[1];i++){const o=10+i*12,outv=new DataView(buf,o,12);out.push({visitor_id:outv.getUint32(0,true),appearance:b[o+4],item_and_hat:b[o+5],mime_seq:[b[o+6],b[o+7],b[o+8]],mime_tempo:b[o+9],host_react:b[o+10],hair:b[o+11]})}return{env:b[0],hostGhost:[...b.slice(2,9)],souls:out}}
+function decodePacket(buf){const b=new Uint8Array(buf);if(b.length<10)throw new Error("short packet");const out=[];for(let i=0;i<b[1];i++){const o=10+i*12,outv=new DataView(buf,o,12);out.push({visitor_id:outv.getUint32(0,true),appearance:b[o+4],item_and_hat:b[o+5],mime_seq:[b[o+6],b[o+7],b[o+8]],mime_tempo:b[o+9]&3,arm_gesture:(b[o+9]>>2)&7,facial:(b[o+9]>>5)&3,host_react:b[o+10],hair:b[o+11]})}return{env:b[0],hostGhost:[...b.slice(2,9)],souls:out}}
 function loadImgs(paths){return paths.map(p=>{const i=new Image();i.src=p;return i})}
 function makeWisp(soul,x,y,scale=1){return{soul,x,y,scale,nodes:Array.from({length:5},(_,i)=>({x,y:y+i*15,px:x,py:y+i*15})),hairPts:null,gaze:{x:0,y:0,tx:0,ty:0},blink:2+Math.random()*3,blinkPh:0,hatSpring:{y:0,v:0},pend:0,pendV:0,phase:Math.random()*7,rip:0}}
 function syncWisps(){const W=canvas.clientWidth,H=canvas.clientHeight;souls.forEach((s,i)=>{if(!wisps.has(s.visitor_id)){const x=60+(i%10)*(W-120)/9,y=90+Math.floor(i/10)*90;wisps.set(s.visitor_id,makeWisp(s,x,y))}else wisps.get(s.visitor_id).soul=s});for(const k of [...wisps.keys()])if(!souls.find(s=>s.visitor_id===k))wisps.delete(k);
- if(window._hostGhost){const hg={visitor_id:0,appearance:window._hostGhost[0],item_and_hat:window._hostGhost[1],mime_seq:window._hostGhost.slice(2,5),mime_tempo:window._hostGhost[5],host_react:0,hair:0};if(!hostWisp)hostWisp=makeWisp(hg,W/2,110,1.15);hostWisp.soul=hg}}
+ if(window._hostGhost){const hg={visitor_id:0,appearance:window._hostGhost[0],item_and_hat:window._hostGhost[1],mime_seq:window._hostGhost.slice(2,5),mime_tempo:window._hostGhost[5]&3,arm_gesture:0,facial:0,host_react:0,hair:0};if(!hostWisp)hostWisp=makeWisp(hg,W/2,110,1.15);hostWisp.soul=hg}}
 function ik(sx,sy,tx,ty,l1,l2,bend){const dx=tx-sx,dy=ty-sy;let d=Math.hypot(dx,dy);d=Math.min(d,l1+l2-.01);const a=Math.acos(Math.max(-1,Math.min(1,(l1*l1+d*d-l2*l2)/(2*l1*d)))),base=Math.atan2(dy,dx),ea=base+bend*a;return{ex:sx+Math.cos(ea)*l1,ey:sy+Math.sin(ea)*l1,hx:sx+Math.cos(base)*d,hy:sy+Math.sin(base)*d}}
 function poseForMime(w,t,m){const s=w.soul,ph=t*(0.9+s.mime_tempo*.45)+w.phase,sn=Math.sin(ph),cs=Math.cos(ph);const base={ox:0,oy:0,rot:0,sx:1,sy:1,seg:1,blush:.35,handL:[-24,18],handR:[24,18],headTilt:0};
  if(m===0)return{...base,oy:4-3*Math.max(0,sn),handL:[-7,-6],handR:[7,sn>0?-6:4],blush:sn>0?.75:.4,headTilt:-4*sn};
@@ -23,7 +23,13 @@ function poseForMime(w,t,m){const s=w.soul,ph=t*(0.9+s.mime_tempo*.45)+w.phase,s
  if(m===5){return{...base,sx:Math.abs(cs)*.9+.25,flare:1.25,handL:[-28,0],handR:[28,0],rot:8*sn,twirl:cs,twirlSin:sn}}
  if(m===6)return{...base,seg:.72,ox:(Math.random()-.5)*3,handL:[14,-2],handR:[-14,-2],sy:.9};
  return{...base,ox:26*sn,oy:-10+14*cs,rot:18*cs,handL:[-28,-8],handR:[28,-8]}}
-function pose(w,t){const s=w.soul;if(w.forceMime!=null)return poseForMime(w,t,w.forceMime);const cur=poseForMime(w,t,s.mime_seq[beat%3]);const frac=beatT/1.2;if(frac<0.75)return cur;const nxt=poseForMime(w,t,s.mime_seq[(beat+1)%3]);let u=(frac-0.75)/0.25;u=u*u*(3-2*u);const mix=(a,b)=>a+(b-a)*u,arr=(a,b)=>[mix(a[0],b[0]),mix(a[1],b[1])];return{...cur,ox:mix(cur.ox||0,nxt.ox||0),oy:mix(cur.oy||0,nxt.oy||0),rot:mix(cur.rot||0,nxt.rot||0),sx:mix(cur.sx||1,nxt.sx||1),sy:mix(cur.sy||1,nxt.sy||1),seg:mix(cur.seg||1,nxt.seg||1),headTilt:mix(cur.headTilt||0,nxt.headTilt||0),blush:mix(cur.blush||.35,nxt.blush||.35),handL:arr(cur.handL,nxt.handL),handR:arr(cur.handR,nxt.handR),flare:nxt.flare,twirl:nxt.twirl,twirlSin:nxt.twirlSin}}
+function applyGesture(pp,w,t){const g=w.soul.arm_gesture||0;if(!g)return pp;const ph=t*2.4+w.phase,sn=Math.sin(ph);
+ if(g===1)return{...pp,handL:[-24,-38+6*sn],handR:[24,-38-6*sn]};
+ if(g===2)return{...pp,handL:[16,-2],handR:[-16,-2]};
+ if(g===3)return{...pp,handL:[-7,3+2*sn],handR:[8,2-2*sn]};
+ if(g===4)return{...pp,handL:[-12,16],handR:[12,16]};
+ return{...pp,handL:[-26,28],handR:[26,28]}}
+function pose(w,t){const s=w.soul;if(w.forceMime!=null)return applyGesture(poseForMime(w,t,w.forceMime),w,t);const cur=applyGesture(poseForMime(w,t,s.mime_seq[beat%3]),w,t);const frac=beatT/1.2;if(frac<0.75)return cur;const nxt=applyGesture(poseForMime(w,t,s.mime_seq[(beat+1)%3]),w,t);let u=(frac-0.75)/0.25;u=u*u*(3-2*u);const mix=(a,b)=>a+(b-a)*u,arr=(a,b)=>[mix(a[0],b[0]),mix(a[1],b[1])];return{...cur,ox:mix(cur.ox||0,nxt.ox||0),oy:mix(cur.oy||0,nxt.oy||0),rot:mix(cur.rot||0,nxt.rot||0),sx:mix(cur.sx||1,nxt.sx||1),sy:mix(cur.sy||1,nxt.sy||1),seg:mix(cur.seg||1,nxt.seg||1),headTilt:mix(cur.headTilt||0,nxt.headTilt||0),blush:mix(cur.blush||.35,nxt.blush||.35),handL:arr(cur.handL,nxt.handL),handR:arr(cur.handR,nxt.handR),flare:nxt.flare,twirl:nxt.twirl,twirlSin:nxt.twirlSin}}
 function stepWisp(w,t,dt){const p=pose(w,t),home=w.fly?null:{x:w.homeX+((p.ox||0)+(w.pairOx||0))*w.scale,y:w.homeY+(p.oy||0)*w.scale};let tx,ty;
  if(w.fly){const f=w.fly,e=Math.min(1,(performance.now()-f.t0)/850),ee=e<.5?2*e*e:1-Math.pow(-2*e+2,2)/2;tx=f.x0+(f.cx-f.x0)*ee+(f.x1-f.cx)*ee*ee;ty=f.y0+(f.cy-f.y0)*ee+(f.y1-f.cy)*ee*ee - Math.sin(ee*Math.PI)*24;if(e>=1){w.state="INTERACTING";w.fly=null;if(pair)pair.since=performance.now()}}else if(dragWisp===w){tx=mouse.x;ty=mouse.y}else{tx=home.x;ty=home.y}
  const n=w.nodes,k=w.scale,damp=ENV_DAMP[window._env||0];
@@ -66,17 +72,6 @@ function contour(w){const n=w.nodes,k=w.scale,p=w.pose||{},pts=[];const breath=1
  const hem=(w.tailPts&&w.tailPts.length===5)?w.tailPts.map(pt=>({x:pt.x,y:pt.y})):pts[4]?[{x:pts[4].lx,y:pts[4].ly},{x:pts[4].rx,y:pts[4].ry}]:[];return{pts,hem}}
 function smoothPath(points){let d=`M ${points[0].x} ${points[0].y}`;for(let i=0;i<points.length-1;i++){const p0=points[Math.max(0,i-1)],p1=points[i],p2=points[i+1],p3=points[Math.min(points.length-1,i+2)];d+=` C ${p1.x+(p2.x-p0.x)/6} ${p1.y+(p2.y-p0.y)/6}, ${p2.x-(p3.x-p1.x)/6} ${p2.y-(p3.y-p1.y)/6}, ${p2.x} ${p2.y}`}return d}
 
-function drawHair(w,t,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)return;const color=HAIR_COLORS[((s.hair||0)>>4)%5],n=w.nodes,k=w.scale;
- const strands=style===1?3:style===2?5:style===3?7:style===4?6:4,len=[0,16,30,52,20,12][style],rig=w.rig||{px:1,py:0,dx:0,dy:1};
- if(!w.hairPts||w.hairPts.length!==strands)w.hairPts=Array.from({length:strands},()=>({x:n[0].x,y:n[0].y,px:n[0].x,py:n[0].y}));
- ctx.strokeStyle=color;ctx.lineCap="round";
- w.hairPts.forEach((pt,i)=>{const off=(i/(Math.max(1,strands-1))-.5)*34*k,ax=n[0].x+rig.px*off+rig.dx*-18*k,ay=n[0].y+rig.py*off+rig.dy*-18*k;
-  if(!behind&&style!==3)return; if(behind&&style===3&&i>1&&i<strands-2)return;
-  const vx=(pt.x-pt.px)*.88,vy=(pt.y-pt.py)*.88;pt.px=pt.x;pt.py=pt.y;pt.x+=vx+(ax-pt.x)*.18+ENV_WIND[window._env||0]*.12*Math.sin(t*3+i)+gust*.35;pt.y+=vy+(ay+len*k-pt.y)*.14+.22;
-  ctx.lineWidth=(style===2?7:5)*k;ctx.beginPath();ctx.moveTo(ax,ay-4*k);ctx.quadraticCurveTo((ax+pt.x)/2,(ay+pt.y)/2-4,pt.x,pt.y);ctx.stroke()});
- if(!behind){ctx.fillStyle=color;ctx.beginPath();ctx.arc(n[0].x+rig.dx*-20*k,n[0].y+rig.dy*-20*k,(style===5?9:13)*k,Math.PI,0);ctx.fill();if(style===5){ctx.beginPath();ctx.arc(n[0].x+rig.dx*-30*k,n[0].y+rig.dy*-30*k,7*k,0,7);ctx.fill()}}}
-
-
 const faceTexCache={};
 function getFaceTexture(style){const img=eyeImgs[style];const key=style+(img&&img.complete?"_ready":"_wait");if(faceTexCache.key===key&&faceTexCache.tex)return faceTexCache.tex;
  const c=document.createElement("canvas");c.width=104;c.height=52;const g=c.getContext("2d");
@@ -85,6 +80,19 @@ function getFaceTexture(style){const img=eyeImgs[style];const key=style+(img&&im
  else{g.fillStyle="#1f2937";g.beginPath();g.arc(38,20,4.5,0,7);g.arc(66,20,4.5,0,7);g.fill()}
  g.strokeStyle="rgba(31,41,55,.75)";g.lineWidth=2;g.beginPath();g.arc(52,34,5,Math.PI*.15,Math.PI*.85);g.stroke();
  faceTexCache.key=key;faceTexCache.tex=c;return c}
+
+let hairImgs={},facialImgs={};
+function drawHairAsset(w,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)return;const color=((s.hair||0)>>4)%5,img=hairImgs[style-1+"_"+color];if(!img||!img.complete)return;
+ const n=w.nodes,k=w.scale,rig=w.rig||{headAngle:0};const long=style===3;
+ if(behind!==long&&!(behind&&long)) { if(behind) return; }
+ if(!behind&&long){/* front fringe handled below */}
+ ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate(rig.headAngle+(w.pose?w.pose.headTilt||0:0)*Math.PI/180*.5);ctx.translate(0,w.hatSpring.y*.4);
+ const W=(long?62:54)*k,H=(long?52:38)*k;ctx.drawImage(img,-W/2,-H*.72,W,H);ctx.restore()}
+function drawFacialHair(w){const s=w.soul,f=s.facial||0;if(!f)return;const color=((s.hair||0)>>4)%5,n=w.nodes,k=w.scale;
+ ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0));ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
+ if(f&1){const mi=facialImgs["m_"+color];if(mi&&mi.complete)ctx.drawImage(mi,-16*k,3*k,32*k,11*k)}
+ if(f&2){const bi=facialImgs["b_"+color];if(bi&&bi.complete)ctx.drawImage(bi,-17*k,6*k,34*k,22*k)}
+ ctx.restore()}
 function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{pts,hem}=contour(w);
  const headTan={x:n[1].x-n[0].x,y:n[1].y-n[0].y},htl=Math.hypot(headTan.x,headTan.y)||1,hx=headTan.x/htl,hy=headTan.y/htl,px=-hy,py=hx;
  const headArc=[0,.25,.5,.75,1].map(f=>{const a=f*Math.PI;return{x:n[0].x+(px*Math.cos(a)-hx*Math.sin(a))*RAD[0]*k,y:n[0].y+(py*Math.cos(a)-hy*Math.sin(a))*RAD[0]*k}});
@@ -106,15 +114,16 @@ function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{p
  sol.hx=target.x;sol.hy=target.y;sol.ex=ch[2].x;sol.ey=ch[2].y;
  const widths=[6.5,5.4,3.6,.4],left=[],right=[];
  for(let i=0;i<4;i++){const A=ch[Math.max(0,i-1)],B=ch[Math.min(3,i+1)];let tx=B.x-A.x,ty=B.y-A.y;const tl=Math.hypot(tx,ty)||1;tx/=tl;ty/=tl;const wd=widths[i]*k;left.push({x:ch[i].x-ty*wd,y:ch[i].y+tx*wd});right.push({x:ch[i].x+ty*wd,y:ch[i].y-tx*wd})}
- const ag=ctx.createLinearGradient(sh.x,sh.y,target.x,target.y);ag.addColorStop(0,tint);ag.addColorStop(1,tint+"99");
+ const ag=ctx.createLinearGradient(sh.x,sh.y,target.x,target.y);const tRgb=parseInt(tint.slice(1),16),tR=(tRgb>>16)&255,tG=(tRgb>>8)&255,tB=tRgb&255;ag.addColorStop(0,`rgba(${tR},${tG},${tB},0)`);ag.addColorStop(.22,`rgba(${tR},${tG},${tB},.88)`);ag.addColorStop(1,`rgba(${tR},${tG},${tB},.96)`);
  ctx.fillStyle=ag;ctx.fill(new Path2D(smoothPath([...left,...right.reverse()])));return sol};
- drawHair(w,t,true);drawArm(1,handWorld(p.handR,1),false);
+ drawHairAsset(w,true);drawArm(1,handWorld(p.handR,1),false);
  const grad=ctx.createLinearGradient(n[0].x,n[0].y-26*k,n[4].x,n[4].y);grad.addColorStop(0,tint);grad.addColorStop(1,tint+"66");ctx.globalAlpha=.95;ctx.fillStyle=grad;ctx.fill(path);ctx.globalAlpha=1;
+ drawHairAsset(w,false);
  const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
  ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
- ctx.save();ctx.scale(w.gaze.x>5?.82:1,blinkScale);const faceTex=getFaceTexture(w.forceEye!=null?w.forceEye:(s.appearance&15)%5);ctx.drawImage(faceTex,-26*k,-13*k,52*k,26*k);ctx.restore();ctx.restore();
+ ctx.save();ctx.scale(w.gaze.x>5?.82:1,blinkScale);const faceTex=getFaceTexture(w.forceEye!=null?w.forceEye:(s.appearance&15)%5);ctx.drawImage(faceTex,-26*k,-13*k,52*k,26*k);ctx.restore();ctx.restore();drawFacialHair(w);
  const hatIdx=(s.item_and_hat&15)%6;if(hatIdx){ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(-w.gaze.x*.2*k,-24*k+Math.max(-2,Math.min(4,w.hatSpring.y)));const hi=hatImgs[hatIdx-1];ctx.font=`${22*k}px system-ui`;ctx.textAlign="center";if(hi&&hi.complete)ctx.drawImage(hi,-13*k,-22*k,26*k,26*k);else ctx.fillText(HATS[hatIdx],0,0);ctx.restore()}
- drawHair(w,t,false);const frontSol=drawArm(-1,handWorld(p.handL,-1),true);
+ const frontSol=drawArm(-1,handWorld(p.handL,-1),true);
  const itemIdx=(s.item_and_hat>>4)%6;if(itemIdx){const dangles=itemIdx>=4;ctx.save();ctx.translate(frontSol.hx,frontSol.hy);ctx.rotate(dangles?w.pend:(Math.atan2(frontSol.hy-frontSol.ey,frontSol.hx-frontSol.ex)+.78));const ii=itemImgs[itemIdx-1];if(ii&&ii.complete)ctx.drawImage(ii,-11*k,0,22*k,22*k);else{ctx.font=`${16*k}px system-ui`;ctx.textAlign="center";ctx.fillText(ITEMS[itemIdx],0,14*k)}ctx.restore();
   if(itemIdx>=3&&Math.random()<.35){const gc=window._manifest?.items?.[itemIdx-1]?.glowColor||"#fbbf24";fx.push({x:frontSol.hx,y:frontSol.hy+8*k,vx:(Math.random()-.5)*.7,vy:-.4-Math.random()*.6,life:1,c:gc,r:1.6+Math.random()*1.6})}
   if(itemIdx>=4){ctx.save();ctx.globalCompositeOperation="screen";ctx.fillStyle="rgba(251,191,36,.25)";ctx.beginPath();ctx.arc(frontSol.hx,frontSol.hy+10*k,16*k,0,7);ctx.fill();ctx.restore()}}
@@ -152,7 +161,7 @@ async function load(){if(!sid){$("#empty").hidden=false;return}$("#empty").hidde
    if(cr.ok&&cj.id===sid){toast("Sanctuary restored after server restart. Visiting souls were held in memory and are gone.");r=await fetch(`/api/s/${sid}`,{headers:h})}}
   if(!r.ok){$("#empty").hidden=false;$("#empty").textContent="This sanctuary no longer exists on the server. Open a new one or ask the host for a fresh link.";toast("Sanctuary not found");return}}const p=decodePacket(await r.arrayBuffer());window._env=p.env;window._hostGhost=p.hostGhost;souls=p.souls;syncWisps();makeParticles();$("#roleBadge").textContent=isHost()?"host":"visitor";$("#roleBadge").classList.toggle("host",isHost());$("#envWrap").hidden=!isHost();$("#envSel").value=p.env}
 async function createSanctuary(){const secret=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");const r=await fetch("/api/sanctuaries",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({host_secret:secret,env_id:0,host_ghost:[0x01,0,0,1,2,1,0]})});const j=await r.json();if(!r.ok){toast(j.error||"create failed");return}localStorage.setItem("wispn_host_"+j.id,secret);sid=j.id;location.hash=sid;await load();openLimbo()}
-function currentSoul(){return{visitor_id:myVid()||999999,appearance:((+$("#fTint").value)<<4)|(+$("#fEyes").value),item_and_hat:((+$("#fItem").value)<<4)|(+$("#fHat").value),mime_seq:[+$("#fBeat0").value,+$("#fBeat1").value,+$("#fBeat2").value],mime_tempo:+$("#fTempo").value,host_react:0,hair:((+$("#fHairColor").value)<<4)|(+$("#fHair").value)}}
+function currentSoul(){return{visitor_id:myVid()||999999,appearance:((+$("#fTint").value)<<4)|(+$("#fEyes").value),item_and_hat:((+$("#fItem").value)<<4)|(+$("#fHat").value),mime_seq:[+$("#fBeat0").value,+$("#fBeat1").value,+$("#fBeat2").value],mime_tempo:(+$("#fTempo").value)|((+$("#fGesture").value)<<2)|((($("#fMustache").checked?1:0)|(($("#fBeard").checked?2:0)))<<5),host_react:0,hair:((+$("#fHairColor").value)<<4)|(+$("#fHair").value)}}
 let heroWisp=null;
 function openLimbo(){$("#limbo").hidden=false;$("#envWrap").hidden=!isHost();heroWisp=makeWisp(currentSoul(),180,180,2);heroWisp.homeX=180;heroWisp.homeY=180;drawHero()}
 function drawHero(){if($("#limbo").hidden||!heroWisp)return;const hctx=$("#hero").getContext("2d");heroWisp.soul=currentSoul();heroWisp.gaze.tx=Math.max(-8,Math.min(8,(mouse.x-180)*.04));heroWisp.gaze.ty=Math.max(-5,Math.min(5,(mouse.y-180)*.04));stepWisp(heroWisp,performance.now()/1000,.016);hctx.clearRect(0,0,360,360);const g=hctx.createRadialGradient(180,150,20,180,180,220);g.addColorStop(0,"#2e2450");g.addColorStop(1,"#0d0a1a");hctx.fillStyle=g;hctx.fillRect(0,0,360,360);const worldCtx=ctx;ctx=hctx;drawWisp(heroWisp,performance.now()/1000);ctx=worldCtx;requestAnimationFrame(drawHero)}
@@ -178,12 +187,14 @@ canvas.addEventListener("touchstart",onDown,{passive:true});canvas.addEventListe
 addEventListener("pointerup",onUp);addEventListener("mouseup",e=>{if(!window.PointerEvent)onUp(e)});addEventListener("touchend",onUp);
 $("#openBtn").onclick=createSanctuary;$("#limboBtn").onclick=openLimbo;$("#shareBtn").onclick=()=>{navigator.clipboard?.writeText(location.href);toast("Link copied")};
 $("#closeLimbo").onclick=()=>$("#limbo").hidden=true;$("#releaseBtn").onclick=release;
-["fTint","fEyes","fHair","fHairColor","fItem","fHat","fBeat0","fBeat1","fBeat2"].forEach(id=>$("#"+id).addEventListener("change",()=>{if(heroWisp&&id==="fHat")heroWisp.hatSpring.v-=6;if(heroWisp)heroWisp.soul=currentSoul()}));
+["fTint","fEyes","fHair","fHairColor","fGesture","fItem","fHat","fBeat0","fBeat1","fBeat2"].forEach(id=>$("#"+id).addEventListener("change",()=>{if(heroWisp&&id==="fHat")heroWisp.hatSpring.v-=6;if(heroWisp)heroWisp.soul=currentSoul()}));
 $("#hero").addEventListener("pointermove",e=>{const r=e.target.getBoundingClientRect();mouse={x:(e.clientX-r.left)*360/r.width,y:(e.clientY-r.top)*360/r.height}});
 addEventListener("hashchange",()=>{sid=location.hash.slice(1)||null;load()});
 (async()=>{let man=null;try{man=await(await fetch("/assets/manifest.json")).json()}catch{}
  const eyePaths=man?.eyes?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/eyes/${i}.svg`);const itemPaths=man?.items?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/items/${i}.svg`);const hatPaths=man?.hats?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/hats/${i}.svg`);
- bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));eyeImgs=loadImgs(eyePaths);itemImgs=loadImgs(itemPaths);hatImgs=loadImgs(hatPaths);window._manifest=man;
- const fill=(sel,arr)=>sel.replaceChildren(...arr.map((v,i)=>new Option(v,i)));fill($("#fTint"),TINTS.map((_,i)=>"Tint "+i));fill($("#fEyes"),EYE_NAMES);fill($("#fItem"),ITEMS.map(v=>v||"None"));fill($("#fHat"),HATS.map(v=>v||"None"));fill($("#fHair"),HAIR_STYLES);fill($("#fHairColor"),HAIR_COLORS.map((_,i)=>"Colour "+i));["#fBeat0","#fBeat1","#fBeat2"].forEach((s,i)=>{fill($(s),MIMES);$(s).value=i});
+ bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));eyeImgs=loadImgs(eyePaths);
+ for(let si=0;si<5;si++)for(let ci=0;ci<5;ci++){const im=new Image();im.src=`/assets/ghost/hair/${si}_${ci}.svg`;hairImgs[si+"_"+ci]=im}
+ for(let ci=0;ci<5;ci++){const a=new Image();a.src=`/assets/ghost/facial/mustache_${ci}.svg`;facialImgs["m_"+ci]=a;const b=new Image();b.src=`/assets/ghost/facial/beard_${ci}.svg`;facialImgs["b_"+ci]=b}itemImgs=loadImgs(itemPaths);hatImgs=loadImgs(hatPaths);window._manifest=man;
+ const fill=(sel,arr)=>sel.replaceChildren(...arr.map((v,i)=>new Option(v,i)));fill($("#fTint"),TINTS.map((_,i)=>"Tint "+i));fill($("#fEyes"),EYE_NAMES);fill($("#fItem"),ITEMS.map(v=>v||"None"));fill($("#fHat"),HATS.map(v=>v||"None"));fill($("#fHair"),HAIR_STYLES);fill($("#fGesture"),ARM_GESTURES);fill($("#fHairColor"),HAIR_COLORS.map((_,i)=>"Colour "+i));["#fBeat0","#fBeat1","#fBeat2"].forEach((s,i)=>{fill($(s),MIMES);$(s).value=i});
  if(sid&&localStorage.getItem("wispn_host_"+sid))toast("Welcome back, host");window._env=0;makeParticles();requestAnimationFrame(frame);await load()})();
 

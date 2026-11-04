@@ -27,8 +27,8 @@ try:
     assert json.loads(b)["id"] == sid and req("GET", f"/api/s/{sid}")[0] == 200
     print("server recovery (same secret -> same id -> 200) PASS")
     # hair travels in record byte 11
-    req("POST", f"/api/s/{sid}", {"action": "summon", "visitor_token": "t1", "mime_seq": [0, 1, 2], "hair": 0x23})
-    s, b = req("GET", f"/api/s/{sid}"); assert b[21] == 0x23
+    req("POST", f"/api/s/{sid}", {"action": "summon", "visitor_token": "t1", "mime_seq": [0, 1, 2], "mime_tempo": 109, "hair": 0x23})
+    s, b = req("GET", f"/api/s/{sid}"); assert b[21] == 0x23 and b[19] == 109, "packed tempo/gesture/facial byte must round-trip"
     print("hair byte PASS")
 finally:
     proc.terminate()
