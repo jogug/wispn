@@ -326,3 +326,11 @@ Bug fix: editing your ghost after logging in on a new device produced a second g
 ## 20. Visiting brings your ghost (latest)
 
 Going through the visit window now carries your own ghost along: after the target sanctuary loads, if you are neither its host nor already a guest there, your current customisation is summoned in under your visitor token and the view reloads as guest (badge, gold marker, your wisp controllable). Host-authenticated saves still replace that soul rather than duplicating it.
+
+## 21. Guest accessories, return-home button, visit speed (latest)
+
+Customisation now persists in localStorage (`wispn_cust`, saved on every picker change and on Save), so when your ghost joins a sanctuary as a guest it keeps your body colour, eyes, hat, item, and gesture instead of falling back to defaults.
+
+As a guest, the sanctuary button becomes a wordless return-home button (house icon) that jumps back to your own sanctuary.
+
+On visit slowness, measured: one sanctuary load costs 3 API fetches, and the visit flow repeated that load up to three times back to back (direct call, hashchange, guest-join reload). Loads are now serialised so duplicates collapse, and visit navigation loads once through hashchange. The face texture cache also held a single entry, so in a sanctuary with mixed eye styles every wisp rebuilt its face canvas every frame; it is now a per-style Map. Per-frame cost itself did not reproduce in headless Chromium (0 ms average over 90 driven frames at 12 wisps, rasterisation skipped there), so the claim is limited to the removed duplicate loads and cache rebuilds.

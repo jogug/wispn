@@ -130,4 +130,9 @@ assert "visitGate" in (root / "public/index.html").read_text() and "visitGo" in 
 print("visit window PASS")
 assert "joinAsGuest" in js and 'Your ghost joined as a guest' in js, "visiting must summon your own ghost into the target as a guest"
 print("visit brings guest ghost PASS")
+assert "wispn_cust" in js and "saveCust" in js, "customisation must persist so guest accessories travel"
+assert "faceTexCache=new Map()" in js or "faceTexCache = new Map()" in js or "new Map()" in js.split("getFaceTexture")[0][-200:], "face textures must cache per style"
+assert "ICON_HOME" in js and 'mode="home"' in js.replace("dataset.mode=","mode="), "guests must get a return-home button"
+assert "loadBusy" in js, "concurrent loads must be serialised"
+print("accessories persist, face cache, guest home, load dedupe PASS")
 print("ALL PASS")
