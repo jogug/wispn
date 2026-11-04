@@ -258,3 +258,13 @@ Hair is configurable in Limbo (6 styles, 5 colours) and travels in the record pa
 Dragging uses pointer events with mouse and touch fallbacks, works on any wisp, keeps the grab offset, shows grab and grabbing cursors, and sets the drop point as the new home. Dropping your own wisp in the bottom mist still opens Limbo. This replaces the own-wisp-only pointer handling that failed in LibreWolf.
 
 All 6 environments now load generated painted backgrounds from `public/assets/environments/{name}_bg.jpg`, cover-fitted with a slow drift, with the canvas particles, props, and vignette composited on top. The procedural gradient remains as a loading fallback.
+
+## 11. Beach rework, biome-first Limbo, button system (latest)
+
+Beach was repainted end to end: `beach_bg.jpg` is a new sunset-lagoon painting, `beach_far.jpg` is its blurred far layer, and `beach_fg2.png` is an image-generated foreground frame (dark palm shoreline on a flat chroma background, keyed out with ImageMagick) regenerated from the new background so all layers share one style. `beach_fgapi.png` is a flipped, darkened derivative of that same frame. All four layers still draw behind the wisps with cover bleed.
+
+Limbo now opens with the Biome selector as its first section. The top-bar button formerly labelled Open Sanctuary is now New Sanctuary: it opens Limbo with `pendingNew` set, and Release creates the sanctuary with the chosen biome and then summons into it. Enter Limbo only dresses and joins the sanctuary already open, so the two flows no longer duplicate each other.
+
+Removed: the canvas-drawn glowing mushroom lights at the bottom of the forest, and the simulated sea kelp/seagrass strands (code deleted, not just disabled). Dark plant and mushroom silhouettes that are painted into the forest and sea foreground layer artwork remain part of those paintings.
+
+Buttons follow one generated style reference, kept at `public/assets/ui/button-style.jpg`: a large warm amber pill for the primary action (Release Into Sanctuary, Enter Limbo), dark deep-teal pills with a green rim for secondary actions (Share, New Sanctuary, Close), and a gold rim on selected Limbo cards. The primary rule uses `#bottomBar #limboBtn` so it outranks the generic bottom-bar button rule. Dropdowns use the same teal pill treatment.

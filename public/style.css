@@ -104,3 +104,11 @@ legend{color:#ffe9b0;padding:0 .4rem}
  .card{min-height:52px}
  #bottomBar button{font-size:.92rem;padding:.5rem .4rem}
 }
+
+/* Button system from assets/ui/button-style.jpg: amber primary pill, teal secondary, gold selected rim */
+button,.card,.tog{border-radius:999px;border:2px solid #4a7a5c;background:linear-gradient(180deg,#173527,#10241a);color:#e7f5ec;box-shadow:0 4px 14px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.14);font-weight:600}
+button:active{transform:translateY(1px)}
+#releaseBtn,#bottomBar #limboBtn{background:linear-gradient(180deg,#ffc95e,#f0a832);border-color:#ffdf94;color:#2a1c04;box-shadow:0 6px 20px rgba(240,168,50,.35),inset 0 2px 0 rgba(255,255,255,.5)}
+.card{border-radius:16px}
+.card.sel,.tog.sel{border-color:#f5c451;background:linear-gradient(180deg,#2b3a24,#1c2b1a);box-shadow:0 0 0 2px rgba(245,196,81,.35),0 6px 16px rgba(0,0,0,.35)}
+select{border-radius:999px;border:2px solid #4a7a5c;background:linear-gradient(180deg,#173527,#10241a);color:#e7f5ec;padding:.6rem .9rem}
