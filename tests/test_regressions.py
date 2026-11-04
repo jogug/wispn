@@ -65,6 +65,16 @@ try:
     s, b, _ = raw("POST", "/api/sanctuaries", {"host_secret": sec4, "password": "later-pass-7"})
     s, b, _ = raw("GET", f"/api/s/{sid4}/meta"); assert json.loads(b)["locked"] is True, "re-create with password must lock an unlocked sanctuary"
     print("password set on re-create PASS")
+    # host-authenticated summons replace the host soul instead of duplicating it
+    sec5 = "555566667777888899990000aaaabbbb"
+    s, b, hd = raw("POST", "/api/sanctuaries", {"host_secret": sec5, "password": "host-pass-5"})
+    sid5 = json.loads(b)["id"]
+    raw("POST", f"/api/s/{sid5}", {"action": "summon", "visitor_token": "host-device-1", "mime_seq": [0, 1, 2]}, headers={"X-Host-Secret": sec5})
+    raw("POST", f"/api/s/{sid5}", {"action": "summon", "visitor_token": "guest-1", "mime_seq": [0, 1, 2]})
+    s, b, _ = raw("POST", f"/api/s/{sid5}", {"action": "summon", "visitor_token": "host-device-2", "mime_seq": [3, 4, 5]}, headers={"X-Host-Secret": sec5})
+    assert json.loads(b)["count"] == 2, "host re-login from a new device must replace the old host soul, keeping guests"
+    print("host soul replacement PASS")
+
 
     # bad passwords are rejected at create
     s, b, _ = raw("POST", "/api/sanctuaries", {"host_secret": "11112222333344445555666677778888", "password": "ab"})

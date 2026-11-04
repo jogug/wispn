@@ -18,7 +18,7 @@ impl SoulRecord {
     pub fn from_bytes(b: &[u8]) -> Option<Self> { if b.len() < 12 { return None; } Some(Self { visitor_id: u32::from_le_bytes(b[0..4].try_into().ok()?), appearance: b[4], item_and_hat: b[5], mime_seq: [b[6], b[7], b[8]], mime_tempo: b[9], host_react: b[10], padding: b[11] }) }
 }
 
-pub struct Sanctuary { pub last_active: u32, pub env_id: u8, pub host_ghost: [u8; 7], pub souls: VecDeque<SoulRecord>, pub colors: std::collections::HashMap<u32, [String; 2]>, pub password_hash: Option<String>, pub host_secret: Vec<u8> }
+pub struct Sanctuary { pub last_active: u32, pub env_id: u8, pub host_ghost: [u8; 7], pub souls: VecDeque<SoulRecord>, pub colors: std::collections::HashMap<u32, [String; 2]>, pub password_hash: Option<String>, pub host_secret: Vec<u8>, pub host_vid: Option<u32> }
 type Store = Arc<DashMap<u64, Sanctuary>>;
 #[derive(Clone)]
 pub struct App { pub store: Store, pub creators: Arc<DashMap<String, u64>>, pub ips: Arc<DashMap<String, u32>> }
@@ -66,7 +66,7 @@ async fn create_sanctuary(State(app): State<App>, ConnectInfo(addr): ConnectInfo
     if app.ips.get(&ip).map(|v| *v).unwrap_or(0) >= 30 { return (StatusCode::TOO_MANY_REQUESTS, empty, Json(serde_json::json!({"error":"too many sanctuaries from this network"}))); }
     let id = derive_id(&secret);
     let fresh = !app.store.contains_key(&id);
-    app.store.entry(id).or_insert_with(|| Sanctuary { last_active: now(), env_id: r.env_id.min(5), host_ghost: r.host_ghost, souls: VecDeque::new(), colors: Default::default(), password_hash: r.password.as_ref().map(|pw| blake3::hash(pw.as_bytes()).to_hex().to_string()), host_secret: secret.clone() });
+    app.store.entry(id).or_insert_with(|| Sanctuary { last_active: now(), env_id: r.env_id.min(5), host_ghost: r.host_ghost, souls: VecDeque::new(), colors: Default::default(), password_hash: r.password.as_ref().map(|pw| blake3::hash(pw.as_bytes()).to_hex().to_string()), host_secret: secret.clone(), host_vid: None });
     if let Some(mut s) = app.store.get_mut(&id) { s.last_active = now(); s.env_id = r.env_id.min(5); if r.host_ghost != [0; 7] { s.host_ghost = r.host_ghost; } if s.password_hash.is_none() { if let Some(pw) = &r.password { s.password_hash = Some(blake3::hash(pw.as_bytes()).to_hex().to_string()); } } }
     if fresh { *app.ips.entry(ip).or_insert(0) += 1; }
     let tok = cookie_token(&headers).unwrap_or_else(|| to_hex(&blake3::hash(&[secret.as_slice(), b"creator"].concat()).as_bytes()[0..16]));
@@ -100,6 +100,7 @@ async fn post_sanctuary(State(app): State<App>, Path(id_hex): Path<String>, head
             if !r.mime_seq.iter().all(|&v| valid_mime(v)) { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"mime_seq values must be 0..7"}))); }
             let Some(mut s) = app.store.get_mut(&id) else { return (StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"sanctuary not found"}))); };
             let vid = if !r.visitor_token.is_empty() { visitor_id(r.visitor_token.as_bytes()) } else if r.visitor_id != 0 { r.visitor_id } else { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"visitor_token required"}))); };
+            if is_host(&headers, id) { if let Some(hv) = s.host_vid { if hv != vid { s.souls.retain(|x| x.visitor_id != hv); s.colors.remove(&hv); } } s.host_vid = Some(vid); }
             let rec = SoulRecord { visitor_id: vid, appearance: r.appearance, item_and_hat: r.item_and_hat, mime_seq: r.mime_seq, mime_tempo: r.mime_tempo & 0x7f, host_react: 0, padding: r.hair };
             if let Some(pos) = s.souls.iter().position(|x| x.visitor_id == vid) { s.souls[pos] = rec; } else { s.souls.push_back(rec); while s.souls.len() > 100 { s.souls.pop_front(); } }
             { fn valid_hex(v: &str) -> bool { v.len() == 7 && v.starts_with('#') && v[1..].chars().all(|c| c.is_ascii_hexdigit()) }

@@ -320,3 +320,5 @@ The role badge is hidden entirely for hosts (guests and visitors keep theirs). A
 ## 19. Visit window (latest)
 
 The visit button now opens a small window in the same style as the unlock gate: paste someone else's sanctuary link (or bare ID), press go, and the app extracts the 16-hex sanctuary ID and loads it. Invalid input gets a toast instead of a broken navigation.
+
+Bug fix: editing your ghost after logging in on a new device produced a second ghost, because souls are keyed by the per-browser visitor token and the new device summoned under a fresh token. Host-authenticated summons now record the host's soul server-side and replace it (including its colours) when the host saves again, so one host always has exactly one ghost while guests are untouched. Regression: host summons from two different tokens keep the count at host plus guests.
