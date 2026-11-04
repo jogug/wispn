@@ -35,6 +35,8 @@ finally:
 js = (root / "public/app.js").read_text()
 assert "(1-f*2)" in js and "w.tailPts" in js, "tail anchors must run lx -> tip -> rx into simulated tail points"
 print("tail order (lx -> tip -> rx, simulated) PASS")
+assert "(dy)*side*20" in js, "right shoulder socket must sit on the same side as its target"
+assert "arm_gesture:(+$(\"#fGesture\").value)" in js or "arm_gesture:" in js, "preview soul must carry the gesture"
 assert "r.status===404" in js and "/api/sanctuaries" in js.split("r.status===404")[1][:400], "client must re-register host secret on 404"
 print("client 404 recovery branch PASS")
 print("ALL PASS")
