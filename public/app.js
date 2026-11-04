@@ -55,7 +55,7 @@ function stepWisp(w,t,dt){const p=pose(w,t),home=w.fly?null:{x:w.homeX+((p.ox||0
 function allWisps(){return hostWisp?[...wisps.values(),hostWisp]:[...wisps.values()]}
 function contour(w){const n=w.nodes,k=w.scale,p=w.pose||{},pts=[];const breath=1+Math.sin(performance.now()*.0015+w.phase)*.05;
  for(let i=0;i<5;i++){const a=n[Math.max(0,i-1)],b=n[Math.min(4,i+1)];let tx=b.x-a.x,ty=b.y-a.y;const l=Math.hypot(tx,ty)||1;tx/=l;ty/=l;const r=RAD[i]*k*(i===1?breath:1)*(p.flare&&i>2?p.flare:1);pts.push({lx:n[i].x-ty*r,ly:n[i].y+tx*r,rx:n[i].x+ty*r,ry:n[i].y-tx*r})}
- const t=performance.now()*.006,hem=[];for(let i=0;i<5;i++){const f=i/4,x=pts[4].lx+(pts[4].rx-pts[4].lx)*f,y=pts[4].ly+(pts[4].ry-pts[4].ly)*f+Math.sin(t+i*1.5+(w.nodes[0].x)*.02)*3.5;hem.push({x,y})}return{pts,hem}}
+ const t=performance.now()*.006,hem=[];for(let i=0;i<5;i++){const f=i/4,x=pts[4].lx+(pts[4].rx-pts[4].lx)*f,tip=[0,6,16,6,0][i]*k,y=pts[4].ly+(pts[4].ry-pts[4].ly)*f+Math.sin(t+i*1.5+(w.nodes[0].x)*.02)*3+tip;hem.push({x,y})}return{pts,hem}}
 function smoothPath(points){let d=`M ${points[0].x} ${points[0].y}`;for(let i=0;i<points.length-1;i++){const p0=points[Math.max(0,i-1)],p1=points[i],p2=points[i+1],p3=points[Math.min(points.length-1,i+2)];d+=` C ${p1.x+(p2.x-p0.x)/6} ${p1.y+(p2.y-p0.y)/6}, ${p2.x-(p3.x-p1.x)/6} ${p2.y-(p3.y-p1.y)/6}, ${p2.x} ${p2.y}`}return d}
 
 function drawHair(w,t,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)return;const color=HAIR_COLORS[((s.hair||0)>>4)%5],n=w.nodes,k=w.scale;
@@ -67,14 +67,16 @@ function drawHair(w,t,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)retu
   const vx=(pt.x-pt.px)*.88,vy=(pt.y-pt.py)*.88;pt.px=pt.x;pt.py=pt.y;pt.x+=vx+(ax-pt.x)*.18+ENV_WIND[window._env||0]*.12*Math.sin(t*3+i)+gust*.35;pt.y+=vy+(ay+len*k-pt.y)*.14+.22;
   ctx.lineWidth=(style===2?7:5)*k;ctx.beginPath();ctx.moveTo(ax,ay-4*k);ctx.quadraticCurveTo((ax+pt.x)/2,(ay+pt.y)/2-4,pt.x,pt.y);ctx.stroke()});
  if(!behind){ctx.fillStyle=color;ctx.beginPath();ctx.arc(n[0].x,n[0].y-20*k,(style===5?9:13)*k,Math.PI,0);ctx.fill();if(style===5){ctx.beginPath();ctx.arc(n[0].x,n[0].y-30*k,7*k,0,7);ctx.fill()}}}
-function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{pts,hem}=contour(w);const path=new Path2D(smoothPath([pts[0].r||{x:pts[0].rx,y:pts[0].ry},...pts.map(q=>({x:q.rx,y:q.ry})),...hem,...pts.map(q=>({x:q.lx,y:q.ly})).reverse()]));
+function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{pts,hem}=contour(w);
+ const headTan={x:n[1].x-n[0].x,y:n[1].y-n[0].y},htl=Math.hypot(headTan.x,headTan.y)||1,headTop={x:n[0].x-headTan.x/htl*RAD[0]*k,y:n[0].y-headTan.y/htl*RAD[0]*k};
+ const path=new Path2D(smoothPath([{x:pts[0].rx,y:pts[0].ry},...pts.map(q=>({x:q.rx,y:q.ry})),...hem,...pts.map(q=>({x:q.lx,y:q.ly})).reverse(),headTop]));
  const tint=TINTS[(s.appearance>>4)%5];
  ctx.save();ctx.globalCompositeOperation="screen";const au=ctx.createRadialGradient(n[0].x,n[0].y,4,n[0].x,n[0].y,65*k);au.addColorStop(0,tint);au.addColorStop(1,"transparent");ctx.globalAlpha=.15+.15*Math.sin(t*2*Math.PI*.8+w.phase);ctx.fillStyle=au;ctx.beginPath();ctx.arc(n[0].x,n[0].y,65*k,0,7);ctx.fill();ctx.restore();
  const shoulder=(side)=>({x:n[1].x+side*20*k,y:n[1].y-2*k});
  const handWorld=(h,side)=>{if(w.pairHands)return side<0?w.pairHands.L:w.pairHands.R;return{x:n[0].x+h[0]*k,y:n[0].y+h[1]*k}};
  const drawArm=(side,target,onTop)=>{const sh=shoulder(side),sol=ik(sh.x,sh.y,target.x,target.y,17*k,15*k,side);const ag=ctx.createLinearGradient(sh.x,sh.y,sol.hx,sol.hy);ag.addColorStop(0,tint);ag.addColorStop(1,tint+"aa");ctx.strokeStyle=ag;ctx.lineCap="round";ctx.lineWidth=11*k;ctx.beginPath();ctx.moveTo(sh.x,sh.y);ctx.lineTo(sol.ex,sol.ey);ctx.stroke();ctx.lineWidth=8.5*k;ctx.beginPath();ctx.moveTo(sol.ex,sol.ey);ctx.lineTo(sol.hx,sol.hy);ctx.stroke();ctx.fillStyle=tint;ctx.beginPath();ctx.arc(sol.hx,sol.hy,5.5*k,0,7);ctx.fill();ctx.fillStyle="rgba(255,255,255,.55)";ctx.beginPath();ctx.arc(sol.hx-1.5*k,sol.hy-1.5*k,1.8*k,0,7);ctx.fill();return sol};
  drawHair(w,t,true);const backSide=w.gaze.x>=0?1:-1;drawArm(backSide,handWorld(backSide>0?p.handR:p.handL,backSide),false);
- ctx.fillStyle="#1a162b";ctx.globalAlpha=.45;ctx.beginPath();ctx.ellipse((hem[0].x+hem[4].x)/2,hem[2].y,22*k,7*k,0,0,7);ctx.fill();ctx.globalAlpha=1;
+ ctx.save();const shg=ctx.createRadialGradient(n[2].x,n[4].y+16*k,2,n[2].x,n[4].y+16*k,34*k);shg.addColorStop(0,"rgba(0,0,0,.34)");shg.addColorStop(.65,"rgba(0,0,0,.14)");shg.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=shg;ctx.beginPath();ctx.ellipse(n[2].x,n[4].y+16*k,34*k,9*k,0,0,7);ctx.fill();ctx.restore();
  const grad=ctx.createLinearGradient(n[0].x,n[0].y-26*k,n[4].x,n[4].y);grad.addColorStop(0,tint);grad.addColorStop(1,tint+"66");ctx.globalAlpha=.95;ctx.fillStyle=grad;ctx.fill(path);ctx.globalAlpha=1;
  const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
  ctx.save();ctx.translate(n[0].x+w.gaze.x*k,n[0].y-4*k+w.gaze.y*k);ctx.fillStyle="rgba(244,114,182,.35)";ctx.beginPath();ctx.ellipse(-14*k,7*k,10*k,6*k,0,0,7);ctx.ellipse(14*k,7*k,10*k,6*k,0,0,7);ctx.fill();
