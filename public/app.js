@@ -76,6 +76,15 @@ function drawHair(w,t,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)retu
   ctx.lineWidth=(style===2?7:5)*k;ctx.beginPath();ctx.moveTo(ax,ay-4*k);ctx.quadraticCurveTo((ax+pt.x)/2,(ay+pt.y)/2-4,pt.x,pt.y);ctx.stroke()});
  if(!behind){ctx.fillStyle=color;ctx.beginPath();ctx.arc(n[0].x+rig.dx*-20*k,n[0].y+rig.dy*-20*k,(style===5?9:13)*k,Math.PI,0);ctx.fill();if(style===5){ctx.beginPath();ctx.arc(n[0].x+rig.dx*-30*k,n[0].y+rig.dy*-30*k,7*k,0,7);ctx.fill()}}}
 
+
+const faceTexCache={};
+function getFaceTexture(style){const img=eyeImgs[style];const key=style+(img&&img.complete?"_ready":"_wait");if(faceTexCache.key===key&&faceTexCache.tex)return faceTexCache.tex;
+ const c=document.createElement("canvas");c.width=104;c.height=52;const g=c.getContext("2d");
+ g.fillStyle="rgba(244,114,182,.38)";g.beginPath();g.ellipse(24,32,11,6.5,0,0,7);g.ellipse(80,32,11,6.5,0,0,7);g.fill();
+ if(img&&img.complete&&img.naturalWidth)g.drawImage(img,20,6,64,32);
+ else{g.fillStyle="#1f2937";g.beginPath();g.arc(38,20,4.5,0,7);g.arc(66,20,4.5,0,7);g.fill()}
+ g.strokeStyle="rgba(31,41,55,.75)";g.lineWidth=2;g.beginPath();g.arc(52,34,5,Math.PI*.15,Math.PI*.85);g.stroke();
+ faceTexCache.key=key;faceTexCache.tex=c;return c}
 function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{pts,hem}=contour(w);
  const headTan={x:n[1].x-n[0].x,y:n[1].y-n[0].y},htl=Math.hypot(headTan.x,headTan.y)||1,hx=headTan.x/htl,hy=headTan.y/htl,px=-hy,py=hx;
  const headArc=[0,.25,.5,.75,1].map(f=>{const a=f*Math.PI;return{x:n[0].x+(px*Math.cos(a)-hx*Math.sin(a))*RAD[0]*k,y:n[0].y+(py*Math.cos(a)-hy*Math.sin(a))*RAD[0]*k}});
@@ -102,8 +111,8 @@ function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{p
  drawHair(w,t,true);drawArm(1,handWorld(p.handR,1),false);
  const grad=ctx.createLinearGradient(n[0].x,n[0].y-26*k,n[4].x,n[4].y);grad.addColorStop(0,tint);grad.addColorStop(1,tint+"66");ctx.globalAlpha=.95;ctx.fillStyle=grad;ctx.fill(path);ctx.globalAlpha=1;
  const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
- ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);ctx.fillStyle="rgba(244,114,182,.35)";ctx.beginPath();ctx.ellipse(-14*k,7*k,10*k,6*k,0,0,7);ctx.ellipse(14*k,7*k,10*k,6*k,0,0,7);ctx.fill();
- const twirlOff=(p.twirlSin||0)*16*k,backFace=(p.twirl!=null&&p.twirl<0);ctx.save();if(backFace)ctx.globalAlpha=.32;ctx.translate(twirlOff,0);const eyeImg=eyeImgs[w.forceEye!=null?w.forceEye:(s.appearance&15)%5];ctx.save();ctx.scale(w.gaze.x>5?.82:1,blinkScale);if(eyeImg&&eyeImg.complete)ctx.drawImage(eyeImg,-20*k,-9*k,40*k,18*k);else{ctx.fillStyle="#1f2937";ctx.font=`${12*k}px system-ui`;ctx.textAlign="center";ctx.fillText("• ‿ •",0,4*k)}ctx.restore();ctx.restore();ctx.restore();
+ ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
+ ctx.save();ctx.scale(w.gaze.x>5?.82:1,blinkScale);const faceTex=getFaceTexture(w.forceEye!=null?w.forceEye:(s.appearance&15)%5);ctx.drawImage(faceTex,-26*k,-13*k,52*k,26*k);ctx.restore();ctx.restore();
  const hatIdx=(s.item_and_hat&15)%6;if(hatIdx){ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(-w.gaze.x*.2*k,-24*k+Math.max(-2,Math.min(4,w.hatSpring.y)));const hi=hatImgs[hatIdx-1];ctx.font=`${22*k}px system-ui`;ctx.textAlign="center";if(hi&&hi.complete)ctx.drawImage(hi,-13*k,-22*k,26*k,26*k);else ctx.fillText(HATS[hatIdx],0,0);ctx.restore()}
  drawHair(w,t,false);const frontSol=drawArm(-1,handWorld(p.handL,-1),true);
  const itemIdx=(s.item_and_hat>>4)%6;if(itemIdx){const dangles=itemIdx>=4;ctx.save();ctx.translate(frontSol.hx,frontSol.hy);ctx.rotate(dangles?w.pend:(Math.atan2(frontSol.hy-frontSol.ey,frontSol.hx-frontSol.ex)+.78));const ii=itemImgs[itemIdx-1];if(ii&&ii.complete)ctx.drawImage(ii,-11*k,0,22*k,22*k);else{ctx.font=`${16*k}px system-ui`;ctx.textAlign="center";ctx.fillText(ITEMS[itemIdx],0,14*k)}ctx.restore();
