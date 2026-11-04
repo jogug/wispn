@@ -112,3 +112,25 @@ button:active{transform:translateY(1px)}
 .card{border-radius:16px}
 .card.sel,.tog.sel{border-color:#f5c451;background:linear-gradient(180deg,#2b3a24,#1c2b1a);box-shadow:0 0 0 2px rgba(245,196,81,.35),0 6px 16px rgba(0,0,0,.35)}
 select{border-radius:999px;border:2px solid #4a7a5c;background:linear-gradient(180deg,#173527,#10241a);color:#e7f5ec;padding:.6rem .9rem}
+
+/* Fat-finger closet: one button language for fields, big targets, sticky Save and Close */
+.limbo-inner{flex-wrap:wrap}
+select{appearance:none;-webkit-appearance:none;background:linear-gradient(180deg,#173527,#10241a);border:2px solid #4a7a5c;color:#e7f5ec;border-radius:999px;min-height:56px;font-size:1rem;padding:.6rem 1rem;box-shadow:0 4px 14px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.14);font-weight:600}
+select option{background:#10241a;color:#e7f5ec}
+#limbo .card{min-height:64px;font-size:1rem;padding:.7rem .6rem;border-radius:16px}
+#limbo .tog{min-height:52px;padding:.6rem 1.1rem;font-size:1rem}
+#limbo .row{gap:.6rem;align-items:center}
+.sw{width:48px;height:48px;border:3px solid #4a7a5c;flex:0 0 auto}
+.swatches{display:flex;gap:.55rem;flex-wrap:wrap;align-items:center}
+input[type=color]{width:72px;height:56px;border:2px solid #4a7a5c;border-radius:14px;background:#10241a;padding:4px;flex:0 0 auto}
+input[type=range]{min-height:48px;accent-color:#f0a832}
+.heroPane canvas{border-radius:18px}
+.limboActions{flex:1 1 100%;position:sticky;bottom:0;display:flex;gap:.6rem;padding:.9rem .2rem .2rem;background:linear-gradient(180deg,rgba(10,24,17,0),rgba(10,24,17,.96) 35%);z-index:6}
+.limboActions button{flex:1;min-height:58px;font-size:1.08rem}
+.limboActions #releaseBtn{flex:1.35}
+@media (max-width:760px){
+ #limbo .limbo-inner{flex-direction:column;flex-wrap:nowrap;align-items:stretch}
+ #limbo .panel{flex:none;width:100%;min-width:0}
+ #limbo .heroPane{margin:0 auto}
+ .limboActions{bottom:70px}
+}

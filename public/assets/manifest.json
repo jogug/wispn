@@ -49,27 +49,27 @@
   ],
   "hats": [
     {
-      "file": "assets/ghost/hats/0.svg",
+      "file": "assets/ghost/hats/0.png",
       "pivotX": 50,
       "pivotY": 78
     },
     {
-      "file": "assets/ghost/hats/1.svg",
+      "file": "assets/ghost/hats/1.png",
       "pivotX": 50,
       "pivotY": 78
     },
     {
-      "file": "assets/ghost/hats/2.svg",
+      "file": "assets/ghost/hats/2.png",
       "pivotX": 50,
       "pivotY": 78
     },
     {
-      "file": "assets/ghost/hats/3.svg",
+      "file": "assets/ghost/hats/3.png",
       "pivotX": 50,
       "pivotY": 78
     },
     {
-      "file": "assets/ghost/hats/4.svg",
+      "file": "assets/ghost/hats/4.png",
       "pivotX": 50,
       "pivotY": 78
     }
