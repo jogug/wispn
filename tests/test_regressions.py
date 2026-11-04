@@ -128,4 +128,6 @@ assert "if(isHost()||(own&&own!==sid))" in js, "hosts must get the visit button 
 print("host badge hidden, host visit button PASS")
 assert "visitGate" in (root / "public/index.html").read_text() and "visitGo" in js and "[0-9a-f]{16}" in js, "visit button must open a window that parses a sanctuary link"
 print("visit window PASS")
+assert "joinAsGuest" in js and 'Your ghost joined as a guest' in js, "visiting must summon your own ghost into the target as a guest"
+print("visit brings guest ghost PASS")
 print("ALL PASS")
