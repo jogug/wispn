@@ -32,6 +32,14 @@ function stepWisp(w,t,dt){const p=pose(w,t),home=w.fly?null:{x:w.homeX+((p.ox||0
  for(let it=0;it<3;it++)for(let i=1;i<5;i++){const a=n[i-1],b=n[i],want=SEG[i-1]*k*(p.seg||1);let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;const diff=(d-want)/d;b.x-=dx*diff*(i===1?.2:.5);b.y-=dy*diff*(i===1?.2:.5);
   if(i>1){const pa=Math.atan2(n[i-1].y-n[i-2].y,n[i-1].x-n[i-2].x);let ca=Math.atan2(b.y-a.y,b.x-a.x),dd=ca-pa;while(dd>Math.PI)dd-=2*Math.PI;while(dd<-Math.PI)dd+=2*Math.PI;const lim=32*Math.PI/180;if(Math.abs(dd)>lim){ca=pa+Math.sign(dd)*lim;b.x=a.x+Math.cos(ca)*want;b.y=a.y+Math.sin(ca)*want}}}
  w.pose=p;
+ {const d={x:n[1].x-n[0].x,y:n[1].y-n[0].y},l=Math.hypot(d.x,d.y)||1,dx=d.x/l,dy=d.y/l;
+  w.rig={dx,dy,px:-dy,py:dx,headAngle:Math.atan2(dy,dx)-Math.PI/2};
+  const t4={x:n[4].x-n[3].x,y:n[4].y-n[3].y},tl=Math.hypot(t4.x,t4.y)||1,tx=t4.x/tl,ty=t4.y/tl,qx=-ty,qy=tx,R=RAD[4]*k;
+  const anchors=[];for(let i=0;i<5;i++){const f=i/4,tip=[0,6,16,6,0][i]*k;anchors.push({x:n[4].x+qx*R*(f*2-1)+tx*tip,y:n[4].y+qy*R*(f*2-1)+ty*tip})}
+  if(!w.tailPts)w.tailPts=anchors.map(a=>({x:a.x,y:a.y,px:a.x,py:a.y}));
+  w.tailPts.forEach((pt,i)=>{const a=anchors[i],vx=(pt.x-pt.px)*.88,vy=(pt.y-pt.py)*.88;pt.px=pt.x;pt.py=pt.y;pt.x+=vx+(a.x-pt.x)*.34+ENV_WIND[window._env||0]*.08*(1+gust*2);pt.y+=vy+(a.y-pt.y)*.34+.1});
+  for(let it=0;it<2;it++)for(let i=1;i<5;i++){const A=w.tailPts[i-1],B=w.tailPts[i],restA=Math.hypot(anchors[i].x-anchors[i-1].x,anchors[i].y-anchors[i-1].y);let ddx=B.x-A.x,ddy=B.y-A.y,dd=Math.hypot(ddx,ddy)||1,diff=(dd-restA)/dd*.5;A.x+=ddx*diff;A.y+=ddy*diff;B.x-=ddx*diff;B.y-=ddy*diff}
+  w.tailAnchors=anchors}
  gust=(window._env===3)?Math.max(0,Math.sin(t*(2*Math.PI/4.5)))*( (t%4.5)<1.2?1:0.15):0;
  if(w.fly&&Math.random()<.6)fx.push({x:n[4].x,y:n[4].y,vx:(Math.random()-.5)*.6,vy:.4+Math.random()*.5,life:1,c:"#fef9c3",r:2});
  if(pair&&pair.effect!=null){const el=performance.now()-pair.since,o=pair.a===w?pair.b:pair.a;
@@ -55,18 +63,18 @@ function stepWisp(w,t,dt){const p=pose(w,t),home=w.fly?null:{x:w.homeX+((p.ox||0
 function allWisps(){return hostWisp?[...wisps.values(),hostWisp]:[...wisps.values()]}
 function contour(w){const n=w.nodes,k=w.scale,p=w.pose||{},pts=[];const breath=1+Math.sin(performance.now()*.0015+w.phase)*.05;
  for(let i=0;i<5;i++){const a=n[Math.max(0,i-1)],b=n[Math.min(4,i+1)];let tx=b.x-a.x,ty=b.y-a.y;const l=Math.hypot(tx,ty)||1;tx/=l;ty/=l;const r=RAD[i]*k*(i===1?breath:1)*(p.flare&&i>2?p.flare:1);pts.push({lx:n[i].x-ty*r,ly:n[i].y+tx*r,rx:n[i].x+ty*r,ry:n[i].y-tx*r})}
- const t=performance.now()*.006,hem=[];for(let i=0;i<5;i++){const f=i/4,x=pts[4].lx+(pts[4].rx-pts[4].lx)*f,tip=[0,6,16,6,0][i]*k,y=pts[4].ly+(pts[4].ry-pts[4].ly)*f+Math.sin(t+i*1.5+(w.nodes[0].x)*.02)*3+tip;hem.push({x,y})}return{pts,hem}}
+ const hem=(w.tailPts&&w.tailPts.length===5)?w.tailPts.map(pt=>({x:pt.x,y:pt.y})):pts[4]?[{x:pts[4].lx,y:pts[4].ly},{x:pts[4].rx,y:pts[4].ry}]:[];return{pts,hem}}
 function smoothPath(points){let d=`M ${points[0].x} ${points[0].y}`;for(let i=0;i<points.length-1;i++){const p0=points[Math.max(0,i-1)],p1=points[i],p2=points[i+1],p3=points[Math.min(points.length-1,i+2)];d+=` C ${p1.x+(p2.x-p0.x)/6} ${p1.y+(p2.y-p0.y)/6}, ${p2.x-(p3.x-p1.x)/6} ${p2.y-(p3.y-p1.y)/6}, ${p2.x} ${p2.y}`}return d}
 
 function drawHair(w,t,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)return;const color=HAIR_COLORS[((s.hair||0)>>4)%5],n=w.nodes,k=w.scale;
- const strands=style===1?3:style===2?5:style===3?7:style===4?6:4,len=[0,16,30,52,20,12][style];
+ const strands=style===1?3:style===2?5:style===3?7:style===4?6:4,len=[0,16,30,52,20,12][style],rig=w.rig||{px:1,py:0,dx:0,dy:1};
  if(!w.hairPts||w.hairPts.length!==strands)w.hairPts=Array.from({length:strands},()=>({x:n[0].x,y:n[0].y,px:n[0].x,py:n[0].y}));
  ctx.strokeStyle=color;ctx.lineCap="round";
- w.hairPts.forEach((pt,i)=>{const off=(i/(Math.max(1,strands-1))-.5)*34*k,ax=n[0].x+off,ay=n[0].y-18*k;
+ w.hairPts.forEach((pt,i)=>{const off=(i/(Math.max(1,strands-1))-.5)*34*k,ax=n[0].x+rig.px*off+rig.dx*-18*k,ay=n[0].y+rig.py*off+rig.dy*-18*k;
   if(!behind&&style!==3)return; if(behind&&style===3&&i>1&&i<strands-2)return;
   const vx=(pt.x-pt.px)*.88,vy=(pt.y-pt.py)*.88;pt.px=pt.x;pt.py=pt.y;pt.x+=vx+(ax-pt.x)*.18+ENV_WIND[window._env||0]*.12*Math.sin(t*3+i)+gust*.35;pt.y+=vy+(ay+len*k-pt.y)*.14+.22;
   ctx.lineWidth=(style===2?7:5)*k;ctx.beginPath();ctx.moveTo(ax,ay-4*k);ctx.quadraticCurveTo((ax+pt.x)/2,(ay+pt.y)/2-4,pt.x,pt.y);ctx.stroke()});
- if(!behind){ctx.fillStyle=color;ctx.beginPath();ctx.arc(n[0].x,n[0].y-20*k,(style===5?9:13)*k,Math.PI,0);ctx.fill();if(style===5){ctx.beginPath();ctx.arc(n[0].x,n[0].y-30*k,7*k,0,7);ctx.fill()}}}
+ if(!behind){ctx.fillStyle=color;ctx.beginPath();ctx.arc(n[0].x+rig.dx*-20*k,n[0].y+rig.dy*-20*k,(style===5?9:13)*k,Math.PI,0);ctx.fill();if(style===5){ctx.beginPath();ctx.arc(n[0].x+rig.dx*-30*k,n[0].y+rig.dy*-30*k,7*k,0,7);ctx.fill()}}}
 function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{pts,hem}=contour(w);
  const headTan={x:n[1].x-n[0].x,y:n[1].y-n[0].y},htl=Math.hypot(headTan.x,headTan.y)||1,hx=headTan.x/htl,hy=headTan.y/htl,px=-hy,py=hx;
  const headArc=[0,.25,.5,.75,1].map(f=>{const a=f*Math.PI;return{x:n[0].x+(px*Math.cos(a)-hx*Math.sin(a))*RAD[0]*k,y:n[0].y+(py*Math.cos(a)-hy*Math.sin(a))*RAD[0]*k}});
@@ -74,15 +82,15 @@ function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{p
  const path=new Path2D(smoothPath(hull));
  const tint=TINTS[(s.appearance>>4)%5];
  ctx.save();ctx.globalCompositeOperation="screen";const au=ctx.createRadialGradient(n[0].x,n[0].y,4,n[0].x,n[0].y,65*k);au.addColorStop(0,tint);au.addColorStop(1,"transparent");ctx.globalAlpha=.15+.15*Math.sin(t*2*Math.PI*.8+w.phase);ctx.fillStyle=au;ctx.beginPath();ctx.arc(n[0].x,n[0].y,65*k,0,7);ctx.fill();ctx.restore();
- const shoulder=(side)=>({x:n[1].x+side*20*k,y:n[1].y-2*k});
+ const shoulder=(side)=>{const d={x:n[2].x-n[1].x,y:n[2].y-n[1].y},l=Math.hypot(d.x,d.y)||1,dx=d.x/l,dy=d.y/l;return{x:n[1].x+(-dy)*side*20*k+dx*-2*k,y:n[1].y+(dx)*side*20*k+dy*-2*k}};
  const handWorld=(h,side)=>{if(w.pairHands)return side<0?w.pairHands.L:w.pairHands.R;return{x:n[0].x+h[0]*k,y:n[0].y+h[1]*k}};
  const drawArm=(side,target,onTop)=>{const sh=shoulder(side),sol=ik(sh.x,sh.y,target.x,target.y,17*k,15*k,side);const ag=ctx.createLinearGradient(sh.x,sh.y,sol.hx,sol.hy);ag.addColorStop(0,tint);ag.addColorStop(1,tint+"aa");ctx.strokeStyle=ag;ctx.lineCap="round";ctx.lineWidth=11*k;ctx.beginPath();ctx.moveTo(sh.x,sh.y);ctx.lineTo(sol.ex,sol.ey);ctx.stroke();ctx.lineWidth=8.5*k;ctx.beginPath();ctx.moveTo(sol.ex,sol.ey);ctx.lineTo(sol.hx,sol.hy);ctx.stroke();ctx.fillStyle=tint;ctx.beginPath();ctx.arc(sol.hx,sol.hy,5.5*k,0,7);ctx.fill();ctx.fillStyle="rgba(255,255,255,.55)";ctx.beginPath();ctx.arc(sol.hx-1.5*k,sol.hy-1.5*k,1.8*k,0,7);ctx.fill();return sol};
  drawHair(w,t,true);const backSide=w.gaze.x>=0?1:-1;drawArm(backSide,handWorld(backSide>0?p.handR:p.handL,backSide),false);
  const grad=ctx.createLinearGradient(n[0].x,n[0].y-26*k,n[4].x,n[4].y);grad.addColorStop(0,tint);grad.addColorStop(1,tint+"66");ctx.globalAlpha=.95;ctx.fillStyle=grad;ctx.fill(path);ctx.globalAlpha=1;
  const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
- ctx.save();ctx.translate(n[0].x+w.gaze.x*k,n[0].y-4*k+w.gaze.y*k);ctx.fillStyle="rgba(244,114,182,.35)";ctx.beginPath();ctx.ellipse(-14*k,7*k,10*k,6*k,0,0,7);ctx.ellipse(14*k,7*k,10*k,6*k,0,0,7);ctx.fill();
+ ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);ctx.fillStyle="rgba(244,114,182,.35)";ctx.beginPath();ctx.ellipse(-14*k,7*k,10*k,6*k,0,0,7);ctx.ellipse(14*k,7*k,10*k,6*k,0,0,7);ctx.fill();
  const twirlOff=(p.twirlSin||0)*16*k,backFace=(p.twirl!=null&&p.twirl<0);ctx.save();if(backFace)ctx.globalAlpha=.32;ctx.translate(twirlOff,0);const eyeImg=eyeImgs[w.forceEye!=null?w.forceEye:(s.appearance&15)%5];ctx.save();ctx.scale(w.gaze.x>5?.82:1,blinkScale);if(eyeImg&&eyeImg.complete)ctx.drawImage(eyeImg,-20*k,-9*k,40*k,18*k);else{ctx.fillStyle="#1f2937";ctx.font=`${12*k}px system-ui`;ctx.textAlign="center";ctx.fillText("• ‿ •",0,4*k)}ctx.restore();ctx.restore();
- const hatIdx=(s.item_and_hat&15)%6;if(hatIdx){ctx.save();ctx.translate(n[0].x-w.gaze.x*.2*k,n[0].y-24*k+Math.max(-2,Math.min(4,w.hatSpring.y)));ctx.rotate((p.headTilt||0)*Math.PI/180*.4-w.gaze.x*.015);const hi=hatImgs[hatIdx-1];ctx.font=`${22*k}px system-ui`;ctx.textAlign="center";if(hi&&hi.complete)ctx.drawImage(hi,-13*k,-22*k,26*k,26*k);else ctx.fillText(HATS[hatIdx],0,0);ctx.restore()}ctx.restore();
+ const hatIdx=(s.item_and_hat&15)%6;if(hatIdx){ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(-w.gaze.x*.2*k,-24*k+Math.max(-2,Math.min(4,w.hatSpring.y)));const hi=hatImgs[hatIdx-1];ctx.font=`${22*k}px system-ui`;ctx.textAlign="center";if(hi&&hi.complete)ctx.drawImage(hi,-13*k,-22*k,26*k,26*k);else ctx.fillText(HATS[hatIdx],0,0);ctx.restore()}ctx.restore();
  drawHair(w,t,false);const frontSol=drawArm(-backSide,handWorld(backSide>0?p.handL:p.handR,-backSide),true);
  const itemIdx=(s.item_and_hat>>4)%6;if(itemIdx){const dangles=itemIdx>=4;ctx.save();ctx.translate(frontSol.hx,frontSol.hy);ctx.rotate(dangles?w.pend:(Math.atan2(frontSol.hy-frontSol.ey,frontSol.hx-frontSol.ex)+.78));const ii=itemImgs[itemIdx-1];if(ii&&ii.complete)ctx.drawImage(ii,-11*k,0,22*k,22*k);else{ctx.font=`${16*k}px system-ui`;ctx.textAlign="center";ctx.fillText(ITEMS[itemIdx],0,14*k)}ctx.restore();
   if(itemIdx>=3&&Math.random()<.35){const gc=window._manifest?.items?.[itemIdx-1]?.glowColor||"#fbbf24";fx.push({x:frontSol.hx,y:frontSol.hy+8*k,vx:(Math.random()-.5)*.7,vy:-.4-Math.random()*.6,life:1,c:gc,r:1.6+Math.random()*1.6})}
