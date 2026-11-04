@@ -70,7 +70,8 @@ function drawHair(w,t,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)retu
 function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{pts,hem}=contour(w);
  const headTan={x:n[1].x-n[0].x,y:n[1].y-n[0].y},htl=Math.hypot(headTan.x,headTan.y)||1,hx=headTan.x/htl,hy=headTan.y/htl,px=-hy,py=hx;
  const headArc=[0,.25,.5,.75,1].map(f=>{const a=f*Math.PI;return{x:n[0].x+(px*Math.cos(a)-hx*Math.sin(a))*RAD[0]*k,y:n[0].y+(py*Math.cos(a)-hy*Math.sin(a))*RAD[0]*k}});
- const path=new Path2D(smoothPath([{x:pts[0].rx,y:pts[0].ry},...pts.map(q=>({x:q.rx,y:q.ry})),...hem,...pts.map(q=>({x:q.lx,y:q.ly})).reverse(),...headArc.reverse()]));
+ const hull=[...headArc.reverse(),...pts.slice(1).map(q=>({x:q.lx,y:q.ly})),...hem,...pts.slice(0,4).reverse().map(q=>({x:q.rx,y:q.ry}))];
+ const path=new Path2D(smoothPath(hull));
  const tint=TINTS[(s.appearance>>4)%5];
  ctx.save();ctx.globalCompositeOperation="screen";const au=ctx.createRadialGradient(n[0].x,n[0].y,4,n[0].x,n[0].y,65*k);au.addColorStop(0,tint);au.addColorStop(1,"transparent");ctx.globalAlpha=.15+.15*Math.sin(t*2*Math.PI*.8+w.phase);ctx.fillStyle=au;ctx.beginPath();ctx.arc(n[0].x,n[0].y,65*k,0,7);ctx.fill();ctx.restore();
  const shoulder=(side)=>({x:n[1].x+side*20*k,y:n[1].y-2*k});
