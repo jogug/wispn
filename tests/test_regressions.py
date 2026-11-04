@@ -113,4 +113,7 @@ assert "ICON_LOCK" in js and 'dataset.mode="lock"' in js, "visitors with no own 
 assert 'data-mode="new"' not in js or True
 assert "#openBtn[data-mode=" in (root / "public/style.css").read_text(), "new sanctuary button must be highlighted in create mode"
 print("visitor lock button, highlighted new sanctuary PASS")
+assert '$("#roleBadge").hidden=isHost()' in js, "host badge must not be displayed"
+assert "if(isHost()||(own&&own!==sid))" in js, "hosts must get the visit button instead of new sanctuary"
+print("host badge hidden, host visit button PASS")
 print("ALL PASS")

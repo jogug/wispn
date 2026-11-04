@@ -312,3 +312,7 @@ Opening a sanctuary link directly now lands on the unlock gate first (checked on
 A visitor with no wisp of their own in the open sanctuary no longer sees the ghost button: it becomes a lock that opens the password prompt (deep links into Limbo reroute there too). Hosts keep the ghost, guests keep it disabled. The New Sanctuary button is highlighted in create mode with the amber primary gradient and a soft gold pulse (stilled under prefers-reduced-motion); in visit mode it returns to teal.
 
 Bug fix: unlocking a sanctuary created before passwords (or restored by the 404 recovery, which cannot carry a password) correctly reported "not password locked", but a second path made it worse: a create call carrying an older creator cookie returned that earlier unlocked sanctuary and silently ignored the new secret and password. The cookie shortcut now applies only when the request carries the same secret; a new secret always creates its own sanctuary and remaps the cookie. Re-creating an existing unlocked sanctuary with its secret plus a password now sets the lock, so such sanctuaries can be locked after the fact at the API level. Covered by regressions for cookie no-hijack and password-on-recreate.
+
+## 18. Host presentation (latest)
+
+The role badge is hidden entirely for hosts (guests and visitors keep theirs). As host, the sanctuary button is always the wordless visit button: it jumps to your own sanctuary from elsewhere, and inside your own sanctuary it simply closes Limbo instead of starting another creation.
