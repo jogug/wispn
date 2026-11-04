@@ -302,3 +302,7 @@ One sanctuary per person: creating sets a `wispn_creator` cookie, and a create c
 Audio is a tiny WebAudio synth, no assets: a two-note pop on tap, a rising sweep on flight, a four-note chime on reactions and on save, a soft blip on the orb wheel and bar buttons. The context only starts after the first pointer press.
 
 Sanctuary passwords: creating a sanctuary requires a password, checked on the frontend as 4-32 ASCII characters (server validates the same) and stored only as a BLAKE3 hash. Opening a locked sanctuary while neither host nor guest shows an unlock gate; the right password returns the host secret for this device, the eye button just visits. There is no reset path, by design. A global `[hidden]` rule now guarantees hidden fields actually hide, which also fixed the environment selector leaking to visitors.
+
+## 16. Direct-open gate with create-your-own, hands over head shine (latest)
+
+Opening a sanctuary link directly now lands on the unlock gate first (checked once on first load, not re-raised by later refreshes): password to become host, a create-your-own button beside it that opens Limbo in new-sanctuary mode starting at the Biome picker, and a just-visit eye. In the wisp renderer, the head shine arc is drawn before the arms, so hands and held items stay in front of the head reflection.

@@ -88,4 +88,8 @@ assert "w!==hostWisp" in js, "host wisp must not be drawn"
 html2 = (root / "public/index.html").read_text()
 assert 'aria-label="Enter Limbo"' in html2 and ">Enter Limbo</button>" not in html2, "bottom bar buttons must be wordless icons"
 print("idle wander, guest mode, invisible host, wordless buttons PASS")
+assert "gateCreate" in (root / "public/index.html").read_text() and "gateCreate" in js, "unlock gate must offer create-your-own beside unlock"
+shine = js.find("Math.PI*1.05"); arms = js.find("drawArm(1,handWorld")
+assert 0 < shine < arms, "head reflection shine must be drawn before the arms so hands stay in front"
+print("gate create-your-own, hands over head shine PASS")
 print("ALL PASS")
