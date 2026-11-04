@@ -175,129 +175,34 @@
   },
   "hairAssets": [
     {
-      "style": 0,
-      "color": 0,
-      "file": "assets/ghost/hair/0_0.svg"
-    },
-    {
-      "style": 0,
-      "color": 1,
-      "file": "assets/ghost/hair/0_1.svg"
-    },
-    {
-      "style": 0,
-      "color": 2,
-      "file": "assets/ghost/hair/0_2.svg"
-    },
-    {
-      "style": 0,
-      "color": 3,
-      "file": "assets/ghost/hair/0_3.svg"
-    },
-    {
-      "style": 0,
-      "color": 4,
-      "file": "assets/ghost/hair/0_4.svg"
-    },
-    {
       "style": 1,
-      "color": 0,
-      "file": "assets/ghost/hair/1_0.svg"
-    },
-    {
-      "style": 1,
-      "color": 1,
-      "file": "assets/ghost/hair/1_1.svg"
-    },
-    {
-      "style": 1,
-      "color": 2,
-      "file": "assets/ghost/hair/1_2.svg"
-    },
-    {
-      "style": 1,
-      "color": 3,
-      "file": "assets/ghost/hair/1_3.svg"
-    },
-    {
-      "style": 1,
-      "color": 4,
-      "file": "assets/ghost/hair/1_4.svg"
+      "name": "tuft",
+      "file": "assets/ghost/hair/tuft.png",
+      "segmented": "chroma-keyed generated shape, tinted at runtime by hair colour picker"
     },
     {
       "style": 2,
-      "color": 0,
-      "file": "assets/ghost/hair/2_0.svg"
-    },
-    {
-      "style": 2,
-      "color": 1,
-      "file": "assets/ghost/hair/2_1.svg"
-    },
-    {
-      "style": 2,
-      "color": 2,
-      "file": "assets/ghost/hair/2_2.svg"
-    },
-    {
-      "style": 2,
-      "color": 3,
-      "file": "assets/ghost/hair/2_3.svg"
-    },
-    {
-      "style": 2,
-      "color": 4,
-      "file": "assets/ghost/hair/2_4.svg"
+      "name": "bob",
+      "file": "assets/ghost/hair/bob.png",
+      "segmented": "chroma-keyed generated shape, tinted at runtime by hair colour picker"
     },
     {
       "style": 3,
-      "color": 0,
-      "file": "assets/ghost/hair/3_0.svg"
-    },
-    {
-      "style": 3,
-      "color": 1,
-      "file": "assets/ghost/hair/3_1.svg"
-    },
-    {
-      "style": 3,
-      "color": 2,
-      "file": "assets/ghost/hair/3_2.svg"
-    },
-    {
-      "style": 3,
-      "color": 3,
-      "file": "assets/ghost/hair/3_3.svg"
-    },
-    {
-      "style": 3,
-      "color": 4,
-      "file": "assets/ghost/hair/3_4.svg"
+      "name": "long",
+      "file": "assets/ghost/hair/long.png",
+      "segmented": "chroma-keyed generated shape, tinted at runtime by hair colour picker"
     },
     {
       "style": 4,
-      "color": 0,
-      "file": "assets/ghost/hair/4_0.svg"
+      "name": "spiky",
+      "file": "assets/ghost/hair/spiky.png",
+      "segmented": "chroma-keyed generated shape, tinted at runtime by hair colour picker"
     },
     {
-      "style": 4,
-      "color": 1,
-      "file": "assets/ghost/hair/4_1.svg"
-    },
-    {
-      "style": 4,
-      "color": 2,
-      "file": "assets/ghost/hair/4_2.svg"
-    },
-    {
-      "style": 4,
-      "color": 3,
-      "file": "assets/ghost/hair/4_3.svg"
-    },
-    {
-      "style": 4,
-      "color": 4,
-      "file": "assets/ghost/hair/4_4.svg"
+      "style": 5,
+      "name": "bun",
+      "file": "assets/ghost/hair/bun.png",
+      "segmented": "chroma-keyed generated shape, tinted at runtime by hair colour picker"
     }
   ],
   "facialHair": {

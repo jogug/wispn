@@ -41,3 +41,18 @@ button{cursor:pointer;border-radius:.6rem;border:1px solid #555;background:#222;
 @keyframes mime-7{0%{transform:translate(0,0)}20%{transform:translate(16px,-8px)}40%{transform:translate(10px,-20px)}60%{transform:translate(-8px,-18px)}80%{transform:translate(-16px,-6px)}100%{transform:translate(0,0)}} /* Orbit Dance. Circles the room. */
 #drawer{padding:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}#radial{position:fixed;inset:auto 1rem 5rem auto;background:#222;border:1px solid #555;border-radius:1rem;padding:.6rem;z-index:9}
 #toast{padding:.6rem 1rem;min-height:1.4rem;color:#a7f3d0}
+.limbo-inner{display:flex;gap:1.2rem;align-items:flex-start;max-width:980px;width:94vw;text-align:left}
+.heroPane{position:sticky;top:0;text-align:center}
+.panel{flex:1;display:flex;flex-direction:column;gap:.9rem;min-width:280px}
+.psec{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:.7rem .9rem}
+.psec h3{margin:.1rem 0 .55rem;font-size:.95rem}
+.cards{display:flex;flex-wrap:wrap;gap:.45rem}
+.card{background:#1e1a33;border:2px solid #3b3555;border-radius:12px;padding:.35rem .5rem;cursor:pointer;color:#eee;min-width:52px;text-align:center}
+.card img{width:44px;height:34px;object-fit:contain;display:block;margin:0 auto}
+.card.sel{border-color:#fbbf24;background:#2b2140}
+.card span{font-size:.72rem;display:block}
+.swatches{display:flex;gap:.35rem;flex-wrap:wrap}
+.sw{width:26px;height:26px;border-radius:50%;border:2px solid #555;cursor:pointer;padding:0}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.35rem 0}
+.tog.sel{border-color:#fbbf24;background:#2b2140}
+input[type=color]{width:52px;height:34px;border:1px solid #555;background:#222;border-radius:8px;cursor:pointer}

@@ -2,6 +2,8 @@ const MIMES=["Shy Peek","Happy Hop","Slow Sway","Curious Tilt","Offering Bow","J
 const TINTS=["#f8fafc","#fda4af","#93c5fd","#86efac","#fde68a"],EYE_NAMES=["Soft Wonder","Happy Arc","Wide Curious","Peaceful Slumber","Cozy Starry"],ITEMS=["","🌸","⭐","🍄","🔮","🕯️"],HATS=["","🎩","🌿","👑","🧢","🌙"],HAIR_STYLES=["None","Tuft","Bob","Long flow","Spiky","Bun"],ARM_GESTURES=["Auto (mime)","Spooky wave","Hug","Chuckle","Offering","Droop"],HAIR_COLORS=["#fef9c3","#fda4af","#93c5fd","#4ade80","#1f2937"];
 const SEG=[14,15,16,16],RAD=[26,28,25,20,12],ENV_WIND=[.12,.05,.3,.8,.5,.35],ENV_DAMP=[.90,.94,.84,.92,.9,.88],PART_N=[45,50,60,70,80,55];
 const $=s=>document.querySelector(s),stage=$("#stage"),canvas=$("#world");let ctx=canvas.getContext("2d");
+const CUST={bodyColor:"#f8fafc",hairColor:"#fef9c3",hair:1,eyes:0,item:0,hat:0,gesture:0,mustache:false,beard:false};
+const HAIR_FILES=["tuft","bob","long","spiky","bun"];
 let bgImgs=[],sid=location.hash.slice(1)||null,souls=[],wisps=new Map(),hostWisp=null,beat=0,beatT=0,mouse={x:-999,y:-999},particles=[],pair=null,orbs=[],dragWisp=null,eyeImgs=[],itemImgs=[],hatImgs=[],fx=[],kelp=[],gust=0;
 function toast(m){$("#toast").textContent=m}
 function visitorToken(){let t=localStorage.getItem("wispn_token");if(!t){t=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");localStorage.setItem("wispn_token",t)}return t}
@@ -81,24 +83,25 @@ function getFaceTexture(style){const img=eyeImgs[style];const key=style+(img&&im
  g.strokeStyle="rgba(31,41,55,.75)";g.lineWidth=2;g.beginPath();g.arc(52,34,5,Math.PI*.15,Math.PI*.85);g.stroke();
  faceTexCache.key=key;faceTexCache.tex=c;return c}
 
-let hairImgs={},facialImgs={};
-function drawHairAsset(w,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)return;const color=((s.hair||0)>>4)%5,img=hairImgs[style-1+"_"+color];if(!img||!img.complete)return;
+let hairImgs={},facialImgs={},hairShapeImgs={},tintCache={};
+function getTinted(img,color){if(!img||!img.complete||!img.naturalWidth)return null;const key=img.src+"|"+color;if(tintCache[key])return tintCache[key];const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;const g=c.getContext("2d");g.drawImage(img,0,0);g.globalCompositeOperation="source-in";g.fillStyle=color;g.fillRect(0,0,c.width,c.height);tintCache[key]=c;return c}
+function drawHairAsset(w,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)return;const img=getTinted(hairShapeImgs[HAIR_FILES[style-1]],s.hairColor||HAIR_COLORS[((s.hair||0)>>4)%5]);if(!img)return;
  const n=w.nodes,k=w.scale,rig=w.rig||{headAngle:0};const long=style===3;
  if(behind!==long&&!(behind&&long)) { if(behind) return; }
  if(!behind&&long){/* front fringe handled below */}
  ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate(rig.headAngle+(w.pose?w.pose.headTilt||0:0)*Math.PI/180*.5);ctx.translate(0,w.hatSpring.y*.4);
  const W=(long?62:54)*k,H=(long?52:38)*k;ctx.drawImage(img,-W/2,-H*.72,W,H);ctx.restore()}
-function drawFacialHair(w){const s=w.soul,f=s.facial||0;if(!f)return;const color=((s.hair||0)>>4)%5,n=w.nodes,k=w.scale;
+function drawFacialHair(w){const s=w.soul,f=s.facial||0;if(!f)return;const color=s.hairColor||HAIR_COLORS[((s.hair||0)>>4)%5],colIdx=((s.hair||0)>>4)%5,n=w.nodes,k=w.scale;
  ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0));ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
- if(f&1){const mi=facialImgs["m_"+color];if(mi&&mi.complete)ctx.drawImage(mi,-16*k,3*k,32*k,11*k)}
- if(f&2){const bi=facialImgs["b_"+color];if(bi&&bi.complete)ctx.drawImage(bi,-17*k,6*k,34*k,22*k)}
+ if(f&1){const mi=getTinted(facialImgs["m_"+colIdx],color);if(mi)ctx.drawImage(mi,-16*k,3*k,32*k,11*k)}
+ if(f&2){const bi=getTinted(facialImgs["b_"+colIdx],color);if(bi)ctx.drawImage(bi,-17*k,6*k,34*k,22*k)}
  ctx.restore()}
 function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{pts,hem}=contour(w);
  const headTan={x:n[1].x-n[0].x,y:n[1].y-n[0].y},htl=Math.hypot(headTan.x,headTan.y)||1,hx=headTan.x/htl,hy=headTan.y/htl,px=-hy,py=hx;
  const headArc=[0,.25,.5,.75,1].map(f=>{const a=f*Math.PI;return{x:n[0].x+(px*Math.cos(a)-hx*Math.sin(a))*RAD[0]*k,y:n[0].y+(py*Math.cos(a)-hy*Math.sin(a))*RAD[0]*k}});
  const hull=[...headArc.reverse(),...pts.slice(1).map(q=>({x:q.lx,y:q.ly})),...hem,...pts.slice(0,4).reverse().map(q=>({x:q.rx,y:q.ry}))];
  const path=new Path2D(smoothPath(hull));
- const tint=TINTS[(s.appearance>>4)%5];
+ const tint=s.bodyColor||TINTS[(s.appearance>>4)%5];
  ctx.save();ctx.globalCompositeOperation="screen";const au=ctx.createRadialGradient(n[0].x,n[0].y,4,n[0].x,n[0].y,65*k);au.addColorStop(0,tint);au.addColorStop(1,"transparent");ctx.globalAlpha=.15+.15*Math.sin(t*2*Math.PI*.8+w.phase);ctx.fillStyle=au;ctx.beginPath();ctx.arc(n[0].x,n[0].y,65*k,0,7);ctx.fill();ctx.restore();
  const shoulder=(side)=>{const d={x:n[2].x-n[1].x,y:n[2].y-n[1].y},l=Math.hypot(d.x,d.y)||1,dx=d.x/l,dy=d.y/l;return{x:n[1].x+(dy)*side*20*k+dx*-2*k,y:n[1].y+(-dx)*side*20*k+dy*-2*k}};
  const handWorld=(h,side)=>{if(w.pairHands)return side<0?w.pairHands.L:w.pairHands.R;return{x:n[0].x+h[0]*k,y:n[0].y+h[1]*k}};
@@ -159,13 +162,15 @@ async function load(){if(!sid){$("#empty").hidden=false;return}$("#empty").hidde
  if(r.status===404){const sec2=hostSecret();
   if(sec2){const cr=await fetch("/api/sanctuaries",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({host_secret:sec2,env_id:window._env||0,host_ghost:window._hostGhost||[0x01,0,0,1,2,1,0]})});const cj=await cr.json().catch(()=>({}));
    if(cr.ok&&cj.id===sid){toast("Sanctuary restored after server restart. Visiting souls were held in memory and are gone.");r=await fetch(`/api/s/${sid}`,{headers:h})}}
-  if(!r.ok){$("#empty").hidden=false;$("#empty").textContent="This sanctuary no longer exists on the server. Open a new one or ask the host for a fresh link.";toast("Sanctuary not found");return}}const p=decodePacket(await r.arrayBuffer());window._env=p.env;window._hostGhost=p.hostGhost;souls=p.souls;syncWisps();makeParticles();$("#roleBadge").textContent=isHost()?"host":"visitor";$("#roleBadge").classList.toggle("host",isHost());$("#envWrap").hidden=!isHost();$("#envSel").value=p.env}
+  if(!r.ok){$("#empty").hidden=false;$("#empty").textContent="This sanctuary no longer exists on the server. Open a new one or ask the host for a fresh link.";toast("Sanctuary not found");return}}const p=decodePacket(await r.arrayBuffer());try{const cm=await(await fetch(`/api/s/${sid}/colors`)).json();for(const so of p.souls){const cc=cm[so.visitor_id];if(cc){if(cc[0])so.bodyColor=cc[0];if(cc[1])so.hairColor=cc[1]}}}catch{}
+window._env=p.env;window._hostGhost=p.hostGhost;souls=p.souls;syncWisps();makeParticles();$("#roleBadge").textContent=isHost()?"host":"visitor";$("#roleBadge").classList.toggle("host",isHost());$("#envWrap").hidden=!isHost();$("#envSel").value=p.env}
 async function createSanctuary(){const secret=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");const r=await fetch("/api/sanctuaries",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({host_secret:secret,env_id:0,host_ghost:[0x01,0,0,1,2,1,0]})});const j=await r.json();if(!r.ok){toast(j.error||"create failed");return}localStorage.setItem("wispn_host_"+j.id,secret);sid=j.id;location.hash=sid;await load();openLimbo()}
-function currentSoul(){return{visitor_id:myVid()||999999,appearance:((+$("#fTint").value)<<4)|(+$("#fEyes").value),item_and_hat:((+$("#fItem").value)<<4)|(+$("#fHat").value),mime_seq:[+$("#fBeat0").value,+$("#fBeat1").value,+$("#fBeat2").value],mime_tempo:(+$("#fTempo").value),arm_gesture:(+$("#fGesture").value),facial:(($("#fMustache").checked?1:0)|(($("#fBeard").checked?2:0))),packed_tempo:(+$("#fTempo").value)|((+$("#fGesture").value)<<2)|((($("#fMustache").checked?1:0)|(($("#fBeard").checked?2:0)))<<5),host_react:0,hair:((+$("#fHairColor").value)<<4)|(+$("#fHair").value)}}
+function currentSoul(){const nearest=(hex,arr)=>{let best=0,bd=1e12;const v=parseInt(hex.slice(1),16);arr.forEach((c,i)=>{const w=parseInt(c.slice(1),16),d=((v>>16)-(w>>16))**2+(((v>>8)&255)-((w>>8)&255))**2+((v&255)-(w&255))**2;if(d<bd){bd=d;best=i}});return best};
+ return{visitor_id:myVid()||999999,appearance:(nearest(CUST.bodyColor,TINTS)<<4)|CUST.eyes,item_and_hat:(CUST.item<<4)|CUST.hat,mime_seq:[+$("#fBeat0").value,+$("#fBeat1").value,+$("#fBeat2").value],mime_tempo:+$("#fTempo").value,arm_gesture:CUST.gesture,facial:(CUST.mustache?1:0)|(CUST.beard?2:0),packed_tempo:(+$("#fTempo").value)|(CUST.gesture<<2)|(((CUST.mustache?1:0)|(CUST.beard?2:0))<<5),host_react:0,hair:(nearest(CUST.hairColor,HAIR_COLORS)<<4)|CUST.hair,bodyColor:CUST.bodyColor,hairColor:CUST.hairColor}}
 let heroWisp=null;
 function openLimbo(){$("#limbo").hidden=false;$("#envWrap").hidden=!isHost();heroWisp=makeWisp(currentSoul(),180,180,2);heroWisp.homeX=180;heroWisp.homeY=180;drawHero()}
 function drawHero(){if($("#limbo").hidden||!heroWisp)return;const hctx=$("#hero").getContext("2d");heroWisp.soul=currentSoul();heroWisp.gaze.tx=Math.max(-8,Math.min(8,(mouse.x-180)*.04));heroWisp.gaze.ty=Math.max(-5,Math.min(5,(mouse.y-180)*.04));stepWisp(heroWisp,performance.now()/1000,.016);hctx.clearRect(0,0,360,360);const g=hctx.createRadialGradient(180,150,20,180,180,220);g.addColorStop(0,"#2e2450");g.addColorStop(1,"#0d0a1a");hctx.fillStyle=g;hctx.fillRect(0,0,360,360);const worldCtx=ctx;ctx=hctx;drawWisp(heroWisp,performance.now()/1000);ctx=worldCtx;requestAnimationFrame(drawHero)}
-async function release(){if(!sid){toast("Open a sanctuary first");return}const limbo=$("#limbo");limbo.classList.add("crossing");const body={action:"summon",visitor_token:visitorToken(),appearance:currentSoul().appearance,item_and_hat:currentSoul().item_and_hat,mime_seq:currentSoul().mime_seq,mime_tempo:currentSoul().packed_tempo,hair:currentSoul().hair};const r=await fetch(`/api/s/${sid}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const j=await r.json();if(r.ok)localStorage.setItem("wispn_my_vid",j.visitor_id);if(isHost())await fetch(`/api/s/${sid}`,{method:"POST",headers:{"Content-Type":"application/json","X-Host-Secret":hostSecret()},body:JSON.stringify({action:"host_update",env_id:+$("#envSel").value})});setTimeout(async()=>{limbo.hidden=true;limbo.classList.remove("crossing");toast(r.ok?"Released into sanctuary":"Summon failed");await load()},1100)}
+async function release(){if(!sid){toast("Open a sanctuary first");return}const limbo=$("#limbo");limbo.classList.add("crossing");const body={action:"summon",visitor_token:visitorToken(),appearance:currentSoul().appearance,item_and_hat:currentSoul().item_and_hat,mime_seq:currentSoul().mime_seq,mime_tempo:currentSoul().packed_tempo,hair:currentSoul().hair,body_color:CUST.bodyColor,hair_color:CUST.hairColor};const r=await fetch(`/api/s/${sid}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const j=await r.json();if(r.ok)localStorage.setItem("wispn_my_vid",j.visitor_id);if(isHost())await fetch(`/api/s/${sid}`,{method:"POST",headers:{"Content-Type":"application/json","X-Host-Secret":hostSecret()},body:JSON.stringify({action:"host_update",env_id:+$("#envSel").value})});setTimeout(async()=>{limbo.hidden=true;limbo.classList.remove("crossing");toast(r.ok?"Released into sanctuary":"Summon failed");await load()},1100)}
 function flyTo(a,b){const dir=b.nodes[0].x>=a.nodes[0].x?1:-1;a.fly={t0:performance.now()+120,x0:a.nodes[0].x,y0:a.nodes[0].y,cx:(a.nodes[0].x+b.nodes[0].x)/2,cy:Math.min(a.nodes[0].y,b.nodes[0].y)-70,x1:b.nodes[0].x-dir*64,y1:b.nodes[0].y};a.state="FLYING";b.state="INTERACTING";pair={a,b,since:0};orbs=[];
  if(isHost()&&a===hostWisp){orbs=["🤗","✋","🕯️","💫","💃"].map((icon,i)=>({i,icon,x:b.nodes[0].x-60+i*30,y:b.nodes[0].y-62}))}}
 async function reactOrb(o){if(!pair)return;const visitor=pair.b.soul.visitor_id;await fetch(`/api/s/${sid}`,{method:"POST",headers:{"Content-Type":"application/json","X-Host-Secret":hostSecret()},body:JSON.stringify({action:"react",visitor_id:visitor,react:o.i+1})});pair.effect=o.i;pair.since=performance.now();pair.burstDone=false;orbs=[];toast("Reaction shared");await load()}
@@ -187,14 +192,26 @@ canvas.addEventListener("touchstart",onDown,{passive:true});canvas.addEventListe
 addEventListener("pointerup",onUp);addEventListener("mouseup",e=>{if(!window.PointerEvent)onUp(e)});addEventListener("touchend",onUp);
 $("#openBtn").onclick=createSanctuary;$("#limboBtn").onclick=openLimbo;$("#shareBtn").onclick=()=>{navigator.clipboard?.writeText(location.href);toast("Link copied")};
 $("#closeLimbo").onclick=()=>$("#limbo").hidden=true;$("#releaseBtn").onclick=release;
-["fTint","fEyes","fHair","fHairColor","fGesture","fItem","fHat","fBeat0","fBeat1","fBeat2"].forEach(id=>$("#"+id).addEventListener("change",()=>{if(heroWisp&&id==="fHat")heroWisp.hatSpring.v-=6;if(heroWisp)heroWisp.soul=currentSoul()}));
 $("#hero").addEventListener("pointermove",e=>{const r=e.target.getBoundingClientRect();mouse={x:(e.clientX-r.left)*360/r.width,y:(e.clientY-r.top)*360/r.height}});
 addEventListener("hashchange",()=>{sid=location.hash.slice(1)||null;load()});
 (async()=>{let man=null;try{man=await(await fetch("/assets/manifest.json")).json()}catch{}
  const eyePaths=man?.eyes?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/eyes/${i}.svg`);const itemPaths=man?.items?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/items/${i}.svg`);const hatPaths=man?.hats?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/hats/${i}.svg`);
  bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));eyeImgs=loadImgs(eyePaths);
- for(let si=0;si<5;si++)for(let ci=0;ci<5;ci++){const im=new Image();im.src=`/assets/ghost/hair/${si}_${ci}.svg`;hairImgs[si+"_"+ci]=im}
+ for(const nm of HAIR_FILES){const im=new Image();im.src=`/assets/ghost/hair/${nm}.png`;hairShapeImgs[nm]=im}
  for(let ci=0;ci<5;ci++){const a=new Image();a.src=`/assets/ghost/facial/mustache_${ci}.svg`;facialImgs["m_"+ci]=a;const b=new Image();b.src=`/assets/ghost/facial/beard_${ci}.svg`;facialImgs["b_"+ci]=b}itemImgs=loadImgs(itemPaths);hatImgs=loadImgs(hatPaths);window._manifest=man;
- const fill=(sel,arr)=>sel.replaceChildren(...arr.map((v,i)=>new Option(v,i)));fill($("#fTint"),TINTS.map((_,i)=>"Tint "+i));fill($("#fEyes"),EYE_NAMES);fill($("#fItem"),ITEMS.map(v=>v||"None"));fill($("#fHat"),HATS.map(v=>v||"None"));fill($("#fHair"),HAIR_STYLES);fill($("#fGesture"),ARM_GESTURES);fill($("#fHairColor"),HAIR_COLORS.map((_,i)=>"Colour "+i));["#fBeat0","#fBeat1","#fBeat2"].forEach((s,i)=>{fill($(s),MIMES);$(s).value=i});
+ const fill=(sel,arr)=>sel.replaceChildren(...arr.map((v,i)=>new Option(v,i)));["#fBeat0","#fBeat1","#fBeat2"].forEach((s2,i)=>{fill($(s2),MIMES);$(s2).value=i});
+ const cards=(el,items,render,get,set)=>{el.replaceChildren(...items.map((it,i)=>{const b=document.createElement("button");b.className="card"+(get()===i?" sel":"");b.innerHTML=render(it,i);b.onclick=()=>{set(i);cards(el,items,render,get,set);if(heroWisp)heroWisp.soul=currentSoul()};return b}))};
+ cards($("#hairCards"),["None",...HAIR_FILES],(v,i)=>i===0?"<span>None</span>":`<img src="/assets/ghost/hair/${v}.png"><span>${HAIR_STYLES[i]}</span>`,()=>CUST.hair,v=>CUST.hair=v);
+ cards($("#eyeCards"),EYE_NAMES,(v,i)=>`<img src="/assets/ghost/eyes/${i}.svg"><span>${v}</span>`,()=>CUST.eyes,v=>CUST.eyes=v);
+ cards($("#hatCards"),HATS,(v,i)=>`<span style="font-size:1.3rem">${v||"—"}</span><span>${i?"Hat "+i:"None"}</span>`,()=>CUST.hat,v=>CUST.hat=v);
+ cards($("#itemCards"),ITEMS,(v,i)=>`<span style="font-size:1.3rem">${v||"—"}</span><span>${i?"Item "+i:"None"}</span>`,()=>CUST.item,v=>CUST.item=v);
+ cards($("#gestureCards"),ARM_GESTURES,v=>`<span>${v}</span>`,()=>CUST.gesture,v=>CUST.gesture=v);
+ const swatches=(el,pick)=>{const cols=["#f8fafc","#fda4af","#93c5fd","#86efac","#fde68a","#1f2937","#fb923c","#c084fc"];el.replaceChildren(...cols.map(c=>{const b=document.createElement("button");b.className="sw";b.style.background=c;b.onclick=()=>pick(c);return b}))};
+ swatches($("#bodySwatches"),c=>{$("#bodyColor").value=c;CUST.bodyColor=c;if(heroWisp)heroWisp.soul=currentSoul()});
+ swatches($("#hairSwatches"),c=>{$("#hairColor").value=c;CUST.hairColor=c;if(heroWisp)heroWisp.soul=currentSoul()});
+ $("#bodyColor").addEventListener("input",e=>{CUST.bodyColor=e.target.value;if(heroWisp)heroWisp.soul=currentSoul()});
+ $("#hairColor").addEventListener("input",e=>{CUST.hairColor=e.target.value;if(heroWisp)heroWisp.soul=currentSoul()});
+ $("#mustBtn").onclick=e=>{CUST.mustache=!CUST.mustache;e.target.classList.toggle("sel",CUST.mustache);if(heroWisp)heroWisp.soul=currentSoul()};
+ $("#beardBtn").onclick=e=>{CUST.beard=!CUST.beard;e.target.classList.toggle("sel",CUST.beard);if(heroWisp)heroWisp.soul=currentSoul()};
  if(sid&&localStorage.getItem("wispn_host_"+sid))toast("Welcome back, host");window._env=0;makeParticles();requestAnimationFrame(frame);await load()})();
 

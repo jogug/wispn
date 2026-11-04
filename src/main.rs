@@ -18,7 +18,7 @@ impl SoulRecord {
     pub fn from_bytes(b: &[u8]) -> Option<Self> { if b.len() < 12 { return None; } Some(Self { visitor_id: u32::from_le_bytes(b[0..4].try_into().ok()?), appearance: b[4], item_and_hat: b[5], mime_seq: [b[6], b[7], b[8]], mime_tempo: b[9], host_react: b[10], padding: b[11] }) }
 }
 
-pub struct Sanctuary { pub last_active: u32, pub env_id: u8, pub host_ghost: [u8; 7], pub souls: VecDeque<SoulRecord> }
+pub struct Sanctuary { pub last_active: u32, pub env_id: u8, pub host_ghost: [u8; 7], pub souls: VecDeque<SoulRecord>, pub colors: std::collections::HashMap<u32, [String; 2]> }
 type Store = Arc<DashMap<u64, Sanctuary>>;
 fn now() -> u32 { SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as u32 }
 pub fn derive_id(host_secret: &[u8]) -> u64 { u64::from_le_bytes(blake3::hash(host_secret).as_bytes()[0..8].try_into().unwrap()) }
@@ -45,13 +45,13 @@ async fn create_sanctuary(State(store): State<Store>, Json(r): Json<CreateReq>) 
     let Some(secret) = parse_hex(&r.host_secret) else { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"host_secret must be hex"}))); };
     if secret.len() != 16 { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"host_secret must be 16 bytes (128-bit)"}))); }
     let id = derive_id(&secret);
-    store.entry(id).or_insert_with(|| Sanctuary { last_active: now(), env_id: r.env_id.min(5), host_ghost: r.host_ghost, souls: VecDeque::new() });
+    store.entry(id).or_insert_with(|| Sanctuary { last_active: now(), env_id: r.env_id.min(5), host_ghost: r.host_ghost, souls: VecDeque::new(), colors: Default::default() });
     if let Some(mut s) = store.get_mut(&id) { s.last_active = now(); s.env_id = r.env_id.min(5); if r.host_ghost != [0; 7] { s.host_ghost = r.host_ghost; } }
     (StatusCode::OK, Json(serde_json::json!({"id": format!("{id:016x}"), "id_u64": id.to_string()})))
 }
 
 #[derive(Deserialize)]
-struct PostReq { action: String, #[serde(default)] visitor_token: String, #[serde(default)] appearance: u8, #[serde(default)] item_and_hat: u8, #[serde(default)] mime_seq: [u8; 3], #[serde(default = "default_tempo")] mime_tempo: u8, #[serde(default)] visitor_id: u32, #[serde(default)] hair: u8, #[serde(default)] react: u8, #[serde(default)] env_id: Option<u8>, #[serde(default)] host_ghost: Option<[u8; 7]> }
+struct PostReq { action: String, #[serde(default)] visitor_token: String, #[serde(default)] appearance: u8, #[serde(default)] item_and_hat: u8, #[serde(default)] mime_seq: [u8; 3], #[serde(default = "default_tempo")] mime_tempo: u8, #[serde(default)] visitor_id: u32, #[serde(default)] hair: u8, #[serde(default)] body_color: String, #[serde(default)] hair_color: String, #[serde(default)] react: u8, #[serde(default)] env_id: Option<u8>, #[serde(default)] host_ghost: Option<[u8; 7]> }
 fn default_tempo() -> u8 { 1 }
 
 async fn post_sanctuary(State(store): State<Store>, Path(id_hex): Path<String>, headers: HeaderMap, Json(r): Json<PostReq>) -> impl IntoResponse {
@@ -63,6 +63,10 @@ async fn post_sanctuary(State(store): State<Store>, Path(id_hex): Path<String>, 
             let vid = if !r.visitor_token.is_empty() { visitor_id(r.visitor_token.as_bytes()) } else if r.visitor_id != 0 { r.visitor_id } else { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"visitor_token required"}))); };
             let rec = SoulRecord { visitor_id: vid, appearance: r.appearance, item_and_hat: r.item_and_hat, mime_seq: r.mime_seq, mime_tempo: r.mime_tempo & 0x7f, host_react: 0, padding: r.hair };
             if let Some(pos) = s.souls.iter().position(|x| x.visitor_id == vid) { s.souls[pos] = rec; } else { s.souls.push_back(rec); while s.souls.len() > 100 { s.souls.pop_front(); } }
+            { fn valid_hex(v: &str) -> bool { v.len() == 7 && v.starts_with('#') && v[1..].chars().all(|c| c.is_ascii_hexdigit()) }
+              let bc = if valid_hex(&r.body_color) { r.body_color.clone() } else { String::new() };
+              let hc = if valid_hex(&r.hair_color) { r.hair_color.clone() } else { String::new() };
+              if !bc.is_empty() || !hc.is_empty() { s.colors.insert(vid, [bc, hc]); } }
             s.last_active = now();
             (StatusCode::OK, Json(serde_json::json!({"ok":true,"visitor_id":vid,"count":s.souls.len()})))
         }
@@ -86,6 +90,12 @@ async fn post_sanctuary(State(store): State<Store>, Path(id_hex): Path<String>, 
     }
 }
 
+async fn get_colors(State(store): State<Store>, Path(id_hex): Path<String>) -> impl IntoResponse {
+    let Ok(id) = u64::from_str_radix(&id_hex, 16) else { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({}))); };
+    let Some(s) = store.get(&id) else { return (StatusCode::NOT_FOUND, Json(serde_json::json!({}))); };
+    let map: std::collections::HashMap<String, [String; 2]> = s.colors.iter().map(|(k, v)| (k.to_string(), v.clone())).collect();
+    (StatusCode::OK, Json(serde_json::to_value(map).unwrap()))
+}
 async fn health() -> impl IntoResponse { (StatusCode::OK, [(header::CONTENT_TYPE, "application/json")], "{\"ok\":true}") }
 
 #[tokio::main]
@@ -97,6 +107,7 @@ async fn main() {
         .route("/health", get(health))
         .route("/api/sanctuaries", post(create_sanctuary))
         .route("/api/s/:id", get(get_sanctuary).post(post_sanctuary))
+        .route("/api/s/:id/colors", get(get_colors))
         .fallback_service(ServeDir::new("public").append_index_html_on_directories(true).fallback(ServeFile::new("public/index.html")))
         .with_state(store);
     let port: u16 = std::env::var("PORT").ok().and_then(|v| v.parse().ok()).unwrap_or(3000);
