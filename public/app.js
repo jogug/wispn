@@ -88,16 +88,6 @@ function getFaceTexture(style,closed=false){const img=eyeImgs[style];const key=s
 
 let hairImgs={},facialImgs={},hairShapeImgs={},tintCache={};
 function getTinted(img,color){if(!img||!img.complete||!img.naturalWidth)return null;const key=img.src+"|"+color;if(tintCache[key])return tintCache[key];const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;const g=c.getContext("2d");g.drawImage(img,0,0);g.globalCompositeOperation="source-in";g.fillStyle=color;g.fillRect(0,0,c.width,c.height);tintCache[key]=c;return c}
-function drawHairAsset(w,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)return;const img=getTinted(hairShapeImgs[HAIR_FILES[style-1]],s.hairColor||HAIR_COLORS[((s.hair||0)>>4)%5]);if(!img)return;
- const n=w.nodes,k=w.scale,rig=w.rig||{headAngle:0};const long=style===3;
- if(behind!==long&&!(behind&&long)) { if(behind) return; }
- if(!behind&&long){/* front fringe handled below */}
- if(!w.hairSpring)w.hairSpring={r:0,v:0};
- ctx.globalAlpha=.86;const hs=w.hairSpring,headVx=n[0].x-(w._lastHx??n[0].x);w._lastHx=n[0].x;
- hs.v+=((-headVx*.012)-hs.r*130-hs.v*9)*.016;hs.r+=hs.v*.016;
- const sway=hs.r+Math.sin(performance.now()*.0022+w.phase)*.045,bobY=Math.sin(performance.now()*.003+w.phase)*1.6*k;
- ctx.save();ctx.translate(n[0].x,n[0].y+bobY);ctx.rotate(rig.headAngle+(w.pose?w.pose.headTilt||0:0)*Math.PI/180*.5+sway);ctx.translate(0,w.hatSpring.y*.4);
- const HAIR_MAP=[{w:1.28,top:1.02},{w:1.16,top:.98},{w:1.34,top:1.04},{w:1.22,top:1.12},{w:1.18,top:1.34}],hm=HAIR_MAP[style-1],R=RAD[0]*k,W=2*R*hm.w,H=W*img.height/img.width;ctx.drawImage(img,-W/2,-R*hm.top,W,H);ctx.restore()}
 function drawFacialHair(w){const s=w.soul,f=s.facial||0;if(!f)return;const color=s.hairColor||HAIR_COLORS[((s.hair||0)>>4)%5],colIdx=((s.hair||0)>>4)%5,n=w.nodes,k=w.scale;
  ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0));ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
  if(f&1){const mi=getTinted(facialImgs["m_"+colIdx],color);if(mi)ctx.drawImage(mi,-16*k,3*k,32*k,11*k)}
@@ -126,9 +116,8 @@ function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{p
  for(let i=0;i<4;i++){const A=ch[Math.max(0,i-1)],B=ch[Math.min(3,i+1)];let tx=B.x-A.x,ty=B.y-A.y;const tl=Math.hypot(tx,ty)||1;tx/=tl;ty/=tl;const wd=widths[i]*k;left.push({x:ch[i].x-ty*wd,y:ch[i].y+tx*wd});right.push({x:ch[i].x+ty*wd,y:ch[i].y-tx*wd})}
  const ag=ctx.createLinearGradient(sh.x,sh.y,target.x,target.y);const tRgb=parseInt(tint.slice(1),16),tR=(tRgb>>16)&255,tG=(tRgb>>8)&255,tB=tRgb&255;ag.addColorStop(0,`rgba(${tR},${tG},${tB},0)`);ag.addColorStop(.22,`rgba(${tR},${tG},${tB},.88)`);ag.addColorStop(1,`rgba(${tR},${tG},${tB},.96)`);
  ctx.fillStyle=ag;ctx.fill(new Path2D(smoothPath([...left,...right.reverse()])));return sol};
- drawHairAsset(w,true);
+ 
  const grad=ctx.createLinearGradient(n[0].x,n[0].y-26*k,n[4].x,n[4].y);grad.addColorStop(0,tint);grad.addColorStop(1,tint+"66");ctx.globalAlpha=.95;ctx.fillStyle=grad;ctx.fill(path);ctx.globalAlpha=1;
- drawHairAsset(w,false);
  const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
  ctx.save();ctx.translate(n[0].x,n[0].y);ctx.rotate((w.rig?w.rig.headAngle:0)+(p.headTilt||0)*Math.PI/180*.5);ctx.translate(w.gaze.x*k,-4*k+w.gaze.y*k);
  ctx.save();ctx.scale(w.gaze.x>5?.82:1,1);const isBlinking=blinkAge>=0&&blinkAge<1;const faceTex=getFaceTexture(w.forceEye!=null?w.forceEye:(s.appearance&15)%10,isBlinking);ctx.drawImage(faceTex,-26*k,-13*k,52*k,26*k);ctx.restore();ctx.restore();drawFacialHair(w);
@@ -147,7 +136,7 @@ function drawProps(t){const W=canvas.clientWidth,H=canvas.clientHeight,e=window.
  if(e===0){for(let i=0;i<8;i++){const x=50+i*(W-100)/7,y=H-30;let glow=.25;for(const w of allWisps()){const d=Math.hypot(w.nodes[0].x-x,w.nodes[0].y-y);if(d<110)glow=Math.max(glow,1-d/140)}ctx.fillStyle=`rgba(94,242,214,${glow})`;ctx.beginPath();ctx.arc(x,y,7+glow*7+Math.sin(t*2+i)*1.5,0,7);ctx.fill();ctx.fillStyle="#a7f3d0";ctx.fillRect(x-1.5,y,3,10)}}
  if(e===5){ctx.fillStyle="rgba(125,211,252,.5)";for(let i=0;i<26;i++){const x=(i*67+t*18)%W,y=H-36+Math.sin(i*2.1+t*1.26)*5;ctx.fillRect(x,y,2.4,2.4)}}}
 function drawFx(dt){for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.life-=dt*.7;if(f.life<=0){fx.splice(i,1);continue}f.x+=f.vx;f.y+=f.vy;if(f.ring){f.r+=dt*46;ctx.strokeStyle=`rgba(186,230,253,${f.life*.7})`;ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.stroke()}else{ctx.globalAlpha=Math.max(0,f.life);ctx.fillStyle=f.c;ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.fill();ctx.globalAlpha=1;if(f.heart){ctx.fillStyle=f.c;ctx.font="10px system-ui";ctx.fillText("♥",f.x-4,f.y-4)}}}}
-function cover(img,W,H,ox,oy,extra=1.06){if(!img||!img.complete||!img.naturalWidth)return false;const sc=Math.max(W/img.naturalWidth,H/img.naturalHeight)*extra,dw=img.naturalWidth*sc,dh=img.naturalHeight*sc;ctx.drawImage(img,(W-dw)/2+ox,(H-dh)/2+oy,dw,dh);return true}
+function cover(img,W,H,ox,oy,extra=1.06){if(!img||!img.complete||!img.naturalWidth)return false;const sc=Math.max((W+170)/img.naturalWidth,(H+110)/img.naturalHeight)*extra,dw=img.naturalWidth*sc,dh=img.naturalHeight*sc;ctx.drawImage(img,(W-dw)/2+ox,(H-dh)/2+oy,dw,dh);return true}
 const fgFadeCache={};
 function fadedFg(img){if(!img||!img.complete||!img.naturalWidth)return null;if(fgFadeCache[img.src])return fgFadeCache[img.src];const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;const g=c.getContext("2d");g.drawImage(img,0,0);g.globalCompositeOperation="destination-in";const gr=g.createLinearGradient(0,0,0,c.height);gr.addColorStop(0,"rgba(0,0,0,0)");gr.addColorStop(.45,"rgba(0,0,0,1)");g.fillStyle=gr;g.fillRect(0,0,c.width,c.height);fgFadeCache[img.src]=c;return c}
 function drawEnv(t){const W=canvas.clientWidth,H=canvas.clientHeight,e=window._env||0;
@@ -163,6 +152,9 @@ function drawEnv(t){const W=canvas.clientWidth,H=canvas.clientHeight,e=window._e
  ctx.fillStyle="rgba(0,0,0,.28)";ctx.beginPath();ctx.moveTo(0,H);if(e===3){ctx.lineTo(0,H*.72);ctx.bezierCurveTo(W*.3,H*.58,W*.6,H*.8,W,H*.66)}else if(e===5){ctx.lineTo(0,H*.8);ctx.bezierCurveTo(W*.3,H*.74+Math.sin(t*.8)*7,W*.7,H*.84,W,H*.78)}else{ctx.lineTo(0,H*.78);ctx.lineTo(W*.18,H*.62);ctx.lineTo(W*.38,H*.78);ctx.lineTo(W*.62,H*.6);ctx.lineTo(W*.84,H*.76);ctx.lineTo(W,H*.64)}ctx.lineTo(W,H);ctx.fill()}
  for(const pt of particles){pt.y+= (e===4? pt.v*1.4 : e===0||e===2? -pt.v : pt.v*.35);pt.x+=Math.sin(t+pt.ph)*.4+(e===3?1.1:e===5?.3:0);if(pt.y<0)pt.y=H;if(pt.y>H)pt.y=0;if(pt.x>W)pt.x=0;ctx.fillStyle=e===0?"rgba(255,203,107,.9)":e===2?"rgba(186,230,253,.65)":"rgba(255,255,255,.8)";ctx.beginPath();ctx.arc(pt.x,pt.y,pt.s,0,7);ctx.fill()}
  if(!Number.isFinite(parX))parX=0;if(!Number.isFinite(parY))parY=0;const fg=(W>0&&H>0)?fadedFg(bgFg[e]):null;if(fg&&fg.width>0&&fg.height>0){const fh=H*.34;ctx.globalAlpha=.94;ctx.drawImage(fg,-parX*26+drift,H-fh,W*1.04,fh);ctx.globalAlpha=1}
+ const fgI=bgFg[e],nearI=bgNear[e];
+ if(fgI&&fgI.complete&&fgI.naturalWidth){const dw=W+190,dh=dw*fgI.naturalHeight/fgI.naturalWidth;ctx.drawImage(fgI,-95-parX*38+Math.sin(t*.11)*8,-40-parY*10,dw,Math.max(dh,H+80))}
+ if(nearI&&nearI.complete&&nearI.naturalWidth){const nw=W+210,nh=nw*nearI.naturalHeight/nearI.naturalWidth;ctx.globalAlpha=.97;ctx.drawImage(nearI,-105-parX*54-Math.sin(t*.13)*10,H-nh+8,nw,nh);ctx.globalAlpha=1}
  const vg=ctx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.85);vg.addColorStop(0,"transparent");vg.addColorStop(1,"rgba(0,0,0,.30)");ctx.fillStyle=vg;ctx.fillRect(0,0,W,H)}
 let lastT=0;
 function frame(now){try{frameBody(now)}catch(err){console.warn(err.stack||err)}requestAnimationFrame(frame)}
@@ -170,8 +162,7 @@ function frameBody(now){const t=now/1000,dt=Math.min(.05,(now-lastT)/1000||.016)
  if(canvas.clientWidth&&canvas.width!==canvas.clientWidth*devicePixelRatio){canvas.width=canvas.clientWidth*devicePixelRatio;canvas.height=canvas.clientHeight*devicePixelRatio}
  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);drawEnv(t);
  drawProps(t);
-function drawForeground(){const W=canvas.clientWidth,H=canvas.clientHeight,img=bgFg[window._env||0];if(!img||!img.complete||!img.naturalWidth)return;const dw=W*1.08,dh=dw*img.naturalHeight/img.naturalWidth;ctx.drawImage(img,-parX*38-dw*.04+Math.sin(performance.now()*.00011)*8,H-dh+4,dw,Math.max(dh,H*.42));const near=bgNear[window._env||0];if(near&&near.complete&&near.naturalWidth){const nw=W*1.12,nh=nw*near.naturalHeight/near.naturalWidth;ctx.globalAlpha=.96;ctx.drawImage(near,-parX*52-nw*.05-Math.sin(performance.now()*.00013)*10,H-nh+6,nw,nh);ctx.globalAlpha=1}}
-const list=allWisps().sort((a,b)=>a.nodes[0].y-b.nodes[0].y);for(const w of list){if(!w.homeX){w.homeX=w.nodes[0].x;w.homeY=w.nodes[0].y}stepWisp(w,t,dt);if(w.rip>0)w.rip-=.02;drawWisp(w,t)}drawFx(dt);drawForeground();
+const list=allWisps().sort((a,b)=>a.nodes[0].y-b.nodes[0].y);for(const w of list){if(!w.homeX){w.homeX=w.nodes[0].x;w.homeY=w.nodes[0].y}stepWisp(w,t,dt);if(w.rip>0)w.rip-=.02;drawWisp(w,t)}drawFx(dt);
  if(pair&&orbs.length){for(const o of orbs){o.y+=Math.sin(t*2+o.i)*.3;ctx.fillStyle="rgba(253,224,171,.92)";ctx.beginPath();ctx.arc(o.x,o.y,15,0,7);ctx.fill();ctx.fillStyle="#7c2d12";ctx.font="13px system-ui";ctx.textAlign="center";ctx.fillText(o.icon,o.x,o.y+5)}}}
 async function load(){if(!sid){$("#empty").hidden=false;return}$("#empty").hidden=true;const h={};const sec=hostSecret();if(sec)h["X-Host-Secret"]=sec;let r=await fetch(`/api/s/${sid}`,{headers:h});
  if(r.status===404){const sec2=hostSecret();
@@ -212,11 +203,10 @@ addEventListener("hashchange",()=>{sid=location.hash.slice(1)||null;load()});
 (async()=>{let man=null;try{man=await(await fetch("/assets/manifest.json")).json()}catch{}
  const eyePaths=[0,1,2,3,4,5,6,7,8,9].map(i=>`/assets/ghost/eyes/${i}.svg`);const itemPaths=man?.items?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/items/${i}.svg`);const hatPaths=man?.hats?.map(e=>"/"+e.file)||[0,1,2,3,4].map(i=>`/assets/ghost/hats/${i}.svg`);
  bgImgs=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_bg.jpg`));bgFar=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_far.jpg`));bgFg=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fg2.png`));bgNear=loadImgs(["forest","heaven","sea","dunes","mountain","beach"].map(n=>`/assets/environments/${n}_fgapi.png`));eyeImgs=loadImgs(eyePaths);
- for(const nm of HAIR_FILES){const im=new Image();im.src=`/assets/ghost/hair/${nm}.png`;hairShapeImgs[nm]=im}
+
  for(let ci=0;ci<5;ci++){const a=new Image();a.src=`/assets/ghost/facial/mustache_${ci}.svg`;facialImgs["m_"+ci]=a;const b=new Image();b.src=`/assets/ghost/facial/beard_${ci}.svg`;facialImgs["b_"+ci]=b}itemImgs=loadImgs(itemPaths);hatImgs=loadImgs(hatPaths);window._manifest=man;
  const fill=(sel,arr)=>sel.replaceChildren(...arr.map((v,i)=>new Option(v,i)));["#fBeat0","#fBeat1","#fBeat2"].forEach((s2,i)=>{fill($(s2),MIMES);$(s2).value=i});
  const cards=(el,items,render,get,set)=>{el.replaceChildren(...items.map((it,i)=>{const b=document.createElement("button");b.className="card"+(get()===i?" sel":"");b.innerHTML=render(it,i);b.onclick=()=>{set(i);cards(el,items,render,get,set);if(heroWisp)heroWisp.soul=currentSoul()};return b}))};
- cards($("#hairCards"),["None",...HAIR_FILES],(v,i)=>i===0?"<span>None</span>":`<img src="/assets/ghost/hair/${v}.png"><span>${HAIR_STYLES[i]}</span>`,()=>CUST.hair,v=>CUST.hair=v);
  cards($("#eyeCards"),EYE_NAMES,(v,i)=>`<img src="/assets/ghost/eyes/${i}.svg"><span>${v}</span>`,()=>CUST.eyes,v=>CUST.eyes=v);
  cards($("#hatCards"),HATS,(v,i)=>`<span style="font-size:1.3rem">${v||"—"}</span><span>${i?"Hat "+i:"None"}</span>`,()=>CUST.hat,v=>CUST.hat=v);
  cards($("#itemCards"),ITEMS,(v,i)=>`<span style="font-size:1.3rem">${v||"—"}</span><span>${i?"Item "+i:"None"}</span>`,()=>CUST.item,v=>CUST.item=v);
