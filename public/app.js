@@ -188,8 +188,7 @@ function onDown(e){mouse=evtPos(e);dragMoved=false;
  if(hit){dragWisp=hit;dragOff={x:mouse.x-hit.nodes[0].x,y:mouse.y-hit.nodes[0].y};canvas.style.cursor="grabbing";try{canvas.setPointerCapture&&e.pointerId!=null&&canvas.setPointerCapture(e.pointerId)}catch(_){} }}
 function onMove(e){mouse=evtPos(e);if(dragWisp){dragMoved=true;mouse.x-=dragOff.x;mouse.y-=dragOff.y}for(const w of allWisps())if(Math.hypot(mouse.x-w.nodes[0].x,mouse.y-w.nodes[0].y)<44)w.rip=1}
 function onUp(e){if(dragWisp){const wasDrag=dragMoved,w=dragWisp;canvas.style.cursor="grab";
- if(wasDrag&&mouse.y>canvas.clientHeight-60&&w.soul.visitor_id===myVid())openLimbo();
- else if(wasDrag){w.homeX=w.nodes[0].x;w.homeY=w.nodes[0].y}
+ if(wasDrag){w.homeX=w.nodes[0].x;w.homeY=w.nodes[0].y}
  else if(!wasDrag&&hostWisp){const actor=isHost()?hostWisp:wisps.get(myVid());if(actor&&w!==actor)flyTo(actor,w)}}
  dragWisp=null}
 canvas.addEventListener("pointerdown",onDown);canvas.addEventListener("mousedown",e=>{if(!window.PointerEvent)onDown(e)});
@@ -218,5 +217,5 @@ addEventListener("hashchange",()=>{sid=location.hash.slice(1)||null;load()});
  $("#hairColor").addEventListener("input",e=>{CUST.hairColor=e.target.value;if(heroWisp)heroWisp.soul=currentSoul()});
  $("#mustBtn").onclick=e=>{CUST.mustache=!CUST.mustache;e.target.classList.toggle("sel",CUST.mustache);if(heroWisp)heroWisp.soul=currentSoul()};
  $("#beardBtn").onclick=e=>{CUST.beard=!CUST.beard;e.target.classList.toggle("sel",CUST.beard);if(heroWisp)heroWisp.soul=currentSoul()};
- if(new URLSearchParams(location.search).has("limbo"))openLimbo();if(sid&&localStorage.getItem("wispn_host_"+sid))toast("Welcome back, host");window._env=0;makeParticles();requestAnimationFrame(frame);await load()})();
+ if(new URLSearchParams(location.search).has("limbo"))openLimbo();window._env=0;makeParticles();requestAnimationFrame(frame);await load()})();
 

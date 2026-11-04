@@ -81,3 +81,26 @@ header .logo{font-size:1.45rem}
 #releaseBtn{padding:.85rem 1.5rem;font-size:1.05rem}
 #closeLimbo{padding:.7rem 1.2rem;font-size:1rem}
 button{font-size:.95rem}
+
+
+#bottomBar{display:flex;gap:.55rem;align-items:center;padding:.6rem .8rem calc(.6rem + env(safe-area-inset-bottom));background:rgba(10,24,18,.92);backdrop-filter:blur(14px);border-top:1px solid #2f5c43;position:relative;z-index:25;flex-wrap:wrap}
+#bottomBar .brand{font-weight:800;color:#ffe9b0;font-size:1.15rem;margin-right:.2rem}
+#bottomBar button{flex:1;min-height:48px;border-radius:14px;background:#173527;border:1px solid #2f5c43;color:#e7f5ec;font-size:1rem}
+#bottomBar button:active{background:#22573c}
+#bottomBar .badge{flex:0 0 auto}
+header{display:none}
+#mist{display:none}
+select,input[type=range]{background:#14291f;border:1px solid #2f5c43;color:#e7f5ec;border-radius:10px;padding:.55rem .6rem;font-size:.95rem;min-height:44px}
+label{display:flex;flex-direction:column;gap:.3rem;font-size:.85rem;color:#cfe8d8}
+.psec label{display:flex}
+fieldset{border:1px solid #2a4d38;border-radius:12px;padding:.6rem}
+legend{color:#ffe9b0;padding:0 .4rem}
+@media (max-width:760px){
+ .limbo-inner{flex-direction:column;width:100vw;max-height:94dvh;border-radius:20px 20px 0 0;padding:.9rem;overflow:auto}
+ #limbo{align-items:flex-end;padding:0}
+ .heroPane{position:relative;margin:0 auto}
+ #hero{width:230px;height:230px}
+ .panel{width:100%;min-width:0}
+ .card{min-height:52px}
+ #bottomBar button{font-size:.92rem;padding:.5rem .4rem}
+}
