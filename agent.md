@@ -130,6 +130,7 @@ Status: implemented, E2E tested locally, release binary built. Deploy step (Fly/
 * Environment backgrounds are CSS gradients (`.env-0` to `.env-5`) plus particles. No `.webp` files ship. Drop a `{name}_bg.webp` into `public/assets/environments/` to override, as noted in `public/assets/manifest.json`.
 * Ghost bodies, eyes, and held items render from the SVG files in `public/assets/ghost/`. Hats and host reactions render as emoji overlays. There is no hat or hands field beyond the packed nibbles, so `hands/` SVGs ship as spare assets.
 * Host reactions 1..8 map to emoji in the client (`app.js` `REACTS`). The wire value stays a mime ID as specified.
+* Ghost motion goes beyond the outline text. Each ghost is a canvas figure with a rigged pose per mime (`poseFor`: head, arm, body joints) and a Verlet cloth hem (`stepCloth`: spring-linked points with wind from sway and tempo). CSS keyframes remain as the environment and fallback motion layer.
 
 ### Run and test
 ```sh
