@@ -75,6 +75,19 @@ function drawHair(w,t,behind){const s=w.soul,style=(s.hair||0)&15;if(!style)retu
   const vx=(pt.x-pt.px)*.88,vy=(pt.y-pt.py)*.88;pt.px=pt.x;pt.py=pt.y;pt.x+=vx+(ax-pt.x)*.18+ENV_WIND[window._env||0]*.12*Math.sin(t*3+i)+gust*.35;pt.y+=vy+(ay+len*k-pt.y)*.14+.22;
   ctx.lineWidth=(style===2?7:5)*k;ctx.beginPath();ctx.moveTo(ax,ay-4*k);ctx.quadraticCurveTo((ax+pt.x)/2,(ay+pt.y)/2-4,pt.x,pt.y);ctx.stroke()});
  if(!behind){ctx.fillStyle=color;ctx.beginPath();ctx.arc(n[0].x+rig.dx*-20*k,n[0].y+rig.dy*-20*k,(style===5?9:13)*k,Math.PI,0);ctx.fill();if(style===5){ctx.beginPath();ctx.arc(n[0].x+rig.dx*-30*k,n[0].y+rig.dy*-30*k,7*k,0,7);ctx.fill()}}}
+
+function drawClothHand(w,side,sol,tint,k){if(!w.handCloth)w.handCloth={};
+ const key=side<0?"L":"R";let pts=w.handCloth[key];
+ const fx=sol.hx-sol.ex,fy=sol.hy-sol.ey,fl=Math.hypot(fx,fy)||1,dx=fx/fl,dy=fy/fl,qx=-dy,qy=dx;
+ if(!pts||pts.length!==4)pts=w.handCloth[key]=Array.from({length:4},(_,i)=>({x:sol.hx+qx*(i-1.5)*4*k,y:sol.hy+dy*8*k,px:sol.hx,py:sol.hy}));
+ pts.forEach((pt,i)=>{const off=(i-1.5)*4.2*k,ax=sol.hx+qx*off+dx*8*k,ay=sol.hy+qy*off+dy*8*k;
+  const vx=(pt.x-pt.px)*.86,vy=(pt.y-pt.py)*.86;pt.px=pt.x;pt.py=pt.y;
+  pt.x+=vx+(ax-pt.x)*.34+ENV_WIND[window._env||0]*.06;pt.y+=vy+(ay-pt.y)*.34+.18});
+ const hg=ctx.createLinearGradient(sol.hx,sol.hy,sol.hx,sol.hy+10*k);hg.addColorStop(0,tint);hg.addColorStop(1,tint+"99");
+ ctx.fillStyle=hg;ctx.beginPath();ctx.moveTo(sol.hx-qx*5*k,sol.hy-qy*5*k);
+ ctx.quadraticCurveTo(pts[0].x,pts[0].y,pts[1].x,pts[1].y);ctx.quadraticCurveTo(pts[2].x,pts[2].y,pts[3].x,pts[3].y);
+ ctx.quadraticCurveTo(sol.hx+qx*5*k,sol.hy+qy*5*k,sol.hx-qx*5*k,sol.hy-qy*5*k);ctx.fill();
+ ctx.fillStyle="rgba(255,255,255,.4)";ctx.beginPath();ctx.arc(sol.hx-1.5*k,sol.hy-1.5*k,1.7*k,0,7);ctx.fill()}
 function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{pts,hem}=contour(w);
  const headTan={x:n[1].x-n[0].x,y:n[1].y-n[0].y},htl=Math.hypot(headTan.x,headTan.y)||1,hx=headTan.x/htl,hy=headTan.y/htl,px=-hy,py=hx;
  const headArc=[0,.25,.5,.75,1].map(f=>{const a=f*Math.PI;return{x:n[0].x+(px*Math.cos(a)-hx*Math.sin(a))*RAD[0]*k,y:n[0].y+(py*Math.cos(a)-hy*Math.sin(a))*RAD[0]*k}});
@@ -84,7 +97,7 @@ function drawWisp(w,t){const s=w.soul,k=w.scale,n=w.nodes,p=w.pose||pose(w,t),{p
  ctx.save();ctx.globalCompositeOperation="screen";const au=ctx.createRadialGradient(n[0].x,n[0].y,4,n[0].x,n[0].y,65*k);au.addColorStop(0,tint);au.addColorStop(1,"transparent");ctx.globalAlpha=.15+.15*Math.sin(t*2*Math.PI*.8+w.phase);ctx.fillStyle=au;ctx.beginPath();ctx.arc(n[0].x,n[0].y,65*k,0,7);ctx.fill();ctx.restore();
  const shoulder=(side)=>{const d={x:n[2].x-n[1].x,y:n[2].y-n[1].y},l=Math.hypot(d.x,d.y)||1,dx=d.x/l,dy=d.y/l;return{x:n[1].x+(-dy)*side*20*k+dx*-2*k,y:n[1].y+(dx)*side*20*k+dy*-2*k}};
  const handWorld=(h,side)=>{if(w.pairHands)return side<0?w.pairHands.L:w.pairHands.R;return{x:n[0].x+h[0]*k,y:n[0].y+h[1]*k}};
- const drawArm=(side,target,onTop)=>{const sh=shoulder(side),sol=ik(sh.x,sh.y,target.x,target.y,17*k,15*k,side);const ag=ctx.createLinearGradient(sh.x,sh.y,sol.hx,sol.hy);ag.addColorStop(0,tint);ag.addColorStop(1,tint+"aa");ctx.strokeStyle=ag;ctx.lineCap="round";ctx.lineWidth=11*k;ctx.beginPath();ctx.moveTo(sh.x,sh.y);ctx.lineTo(sol.ex,sol.ey);ctx.stroke();ctx.lineWidth=8.5*k;ctx.beginPath();ctx.moveTo(sol.ex,sol.ey);ctx.lineTo(sol.hx,sol.hy);ctx.stroke();ctx.fillStyle=tint;ctx.beginPath();ctx.arc(sol.hx,sol.hy,5.5*k,0,7);ctx.fill();ctx.fillStyle="rgba(255,255,255,.55)";ctx.beginPath();ctx.arc(sol.hx-1.5*k,sol.hy-1.5*k,1.8*k,0,7);ctx.fill();return sol};
+ const drawArm=(side,target,onTop)=>{const sh=shoulder(side),sol=ik(sh.x,sh.y,target.x,target.y,17*k,15*k,side);const ag=ctx.createLinearGradient(sh.x,sh.y,sol.hx,sol.hy);ag.addColorStop(0,tint);ag.addColorStop(1,tint+"aa");ctx.strokeStyle=ag;ctx.lineCap="round";ctx.lineWidth=11*k;ctx.beginPath();ctx.moveTo(sh.x,sh.y);ctx.lineTo(sol.ex,sol.ey);ctx.stroke();ctx.lineWidth=8.5*k;ctx.beginPath();ctx.moveTo(sol.ex,sol.ey);ctx.lineTo(sol.hx,sol.hy);ctx.stroke();drawClothHand(w,side,sol,tint,k);return sol};
  drawHair(w,t,true);const backSide=w.gaze.x>=0?1:-1;drawArm(backSide,handWorld(backSide>0?p.handR:p.handL,backSide),false);
  const grad=ctx.createLinearGradient(n[0].x,n[0].y-26*k,n[4].x,n[4].y);grad.addColorStop(0,tint);grad.addColorStop(1,tint+"66");ctx.globalAlpha=.95;ctx.fillStyle=grad;ctx.fill(path);ctx.globalAlpha=1;
  const blinkAge=(performance.now()-w.blinkPh)/140,blinkScale=blinkAge<1?Math.abs(Math.cos(blinkAge*Math.PI))*.95+.05:1;
