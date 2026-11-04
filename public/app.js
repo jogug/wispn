@@ -35,7 +35,7 @@ function stepWisp(w,t,dt){const p=pose(w,t),home=w.fly?null:{x:w.homeX+((p.ox||0
  {const d={x:n[1].x-n[0].x,y:n[1].y-n[0].y},l=Math.hypot(d.x,d.y)||1,dx=d.x/l,dy=d.y/l;
   w.rig={dx,dy,px:-dy,py:dx,headAngle:Math.atan2(dy,dx)-Math.PI/2};
   const t4={x:n[4].x-n[3].x,y:n[4].y-n[3].y},tl=Math.hypot(t4.x,t4.y)||1,tx=t4.x/tl,ty=t4.y/tl,qx=-ty,qy=tx,R=RAD[4]*k;
-  const anchors=[];for(let i=0;i<5;i++){const f=i/4,tip=[0,6,16,6,0][i]*k;anchors.push({x:n[4].x+qx*R*(f*2-1)+tx*tip,y:n[4].y+qy*R*(f*2-1)+ty*tip})}
+  const anchors=[];for(let i=0;i<5;i++){const f=i/4,tip=[0,6,16,6,0][i]*k;anchors.push({x:n[4].x+qx*R*(1-f*2)+tx*tip,y:n[4].y+qy*R*(1-f*2)+ty*tip})}
   if(!w.tailPts)w.tailPts=anchors.map(a=>({x:a.x,y:a.y,px:a.x,py:a.y}));
   w.tailPts.forEach((pt,i)=>{const a=anchors[i],vx=(pt.x-pt.px)*.88,vy=(pt.y-pt.py)*.88;pt.px=pt.x;pt.py=pt.y;pt.x+=vx+(a.x-pt.x)*.34+ENV_WIND[window._env||0]*.08*(1+gust*2);pt.y+=vy+(a.y-pt.y)*.34+.1});
   for(let it=0;it<2;it++)for(let i=1;i<5;i++){const A=w.tailPts[i-1],B=w.tailPts[i],restA=Math.hypot(anchors[i].x-anchors[i-1].x,anchors[i].y-anchors[i-1].y);let ddx=B.x-A.x,ddy=B.y-A.y,dd=Math.hypot(ddx,ddy)||1,diff=(dd-restA)/dd*.5;A.x+=ddx*diff;A.y+=ddy*diff;B.x-=ddx*diff;B.y-=ddy*diff}
