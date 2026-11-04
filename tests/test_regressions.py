@@ -47,4 +47,10 @@ assert "(dy)*side*20" in js, "right shoulder socket must sit on the same side as
 assert "arm_gesture:(+$(\"#fGesture\").value)" in js or "arm_gesture:" in js, "preview soul must carry the gesture"
 assert "r.status===404" in js and "/api/sanctuaries" in js.split("r.status===404")[1][:400], "client must re-register host secret on 404"
 print("client 404 recovery branch PASS")
+assert "w.wander" in js and "wander" in js, "idle wisps must wander to inspect points and other wisps"
+assert "isGuest()" in js and '$("#limboBtn").disabled=guest' in js, "guests must be locked out of limbo and new sanctuaries"
+assert "w!==hostWisp" in js, "host wisp must not be drawn"
+html2 = (root / "public/index.html").read_text()
+assert 'aria-label="Enter Limbo"' in html2 and ">Enter Limbo</button>" not in html2, "bottom bar buttons must be wordless icons"
+print("idle wander, guest mode, invisible host, wordless buttons PASS")
 print("ALL PASS")

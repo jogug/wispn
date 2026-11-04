@@ -284,3 +284,11 @@ Five more hats were rendered the same way (second chroma sheet, keyed and segmen
 Items and interaction buttons are rendered sprites now, generated on chroma sheets, keyed, and segmented like the hats: `items/0..4.png` (blossom, star wand, mushroom, crystal ball, candle) and `public/assets/ui/orb0..4.png` (heart, hand, flame, swirl, notes medallions drawn at 48px in the orb wheel, emoji fallback only while loading). The manifest points at the item PNGs and the Limbo cards preview the real sprites.
 
 Mustache and beard are removed: the Limbo sections, toggles, colour picker, renderer, and packed facial bits are gone (the byte keeps its layout, facial is always 0). Eye cards put each eye asset on a cream chip so the dark eye art reads against the panel. Limbo cards use an even auto-fill grid with centred content. New Sanctuary shrank in the bottom bar (flex .55, smaller type) beside Share and the amber Enter Limbo. Droop now lowers the hands to y=48 with a slow sway instead of 28. Regression coverage for the removal, droop, and sprite wiring lives in `tests/test_regressions.py`.
+
+## 14. Idle wander, wordless bar, invisible host and guests (latest)
+
+Idle wisps now wander. After 5 to 16 idle seconds a wisp flies off on an eased arc, most often to a slowly orbiting inspection point around another wisp (its gaze tracks neighbours as before), otherwise to a random scenic point, hovers there for a few seconds, then flies home and rests 6 to 18 seconds before the next trip. Wandering pauses while the wisp is dragged, flying to a tap, or in a pair interaction, and sheds the usual flight motes.
+
+The bottom bar is wordless: Share, New Sanctuary, and Enter Limbo are inline SVG icons (share nodes, plus-in-circle, ghost) with aria-labels and tooltips.
+
+The host is no longer drawn in the world and cannot be dragged or tapped; the host acts through the orb wheel only. Guest mode: when your stored visitor ID appears in another sanctuary's souls, the app loads that soul as your ghost (gold marker dot, badge reads guest), and both Enter Limbo and New Sanctuary are disabled with explanatory toasts, so a guest cannot dress or create from inside someone else's sanctuary. Verified with a DOM probe: guest=true, both buttons disabled, badge guest, own wisp flagged.
