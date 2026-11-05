@@ -151,4 +151,6 @@ assert "pp.souls.find" in js and "CUST.item=(mine.item_and_hat>>4)%6" in js, "gu
 print("guest accessories from home ghost PASS")
 assert "fromHome" in js and "Your ghost was refreshed" in js, "guest accessories must refresh however the guest arrives"
 print("arrival-independent guest sync PASS")
+assert "plainVisitor" in js and '$("#shareBtn").hidden=plainVisitor' in js and "lb.hidden=plainVisitor" in js, "plain visitors must see only the new sanctuary button"
+print("visitor minimal bar PASS")
 print("ALL PASS")

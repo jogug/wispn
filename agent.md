@@ -344,3 +344,7 @@ Bug fix, third attempt, premise tested first: both earlier fixes assumed the gue
 Guests can leave gifts. Eight gift sprites (fly agaric, cake, carrot, broccoli, dirty sock, bouquet, cheese, honey) were rendered on a chroma sheet and segmented into `public/assets/gifts/0..7.png`. A wordless gift button appears in the bar while you are a guest and opens the picker; leaving a gift stores it server-side per sanctuary (action `gift`, validated 1..8, with your visitor ID and your home sanctuary code, capped at 100). On load, unseen gifts are placed along the ground: the nearest resident wisp (never the giver, unless it is the only one) flies over, hearts burst, and the gift floats away collected, remembered per browser so it plays once.
 
 A wordless basket button opens the gift basket: each entry shows the gift sprite and the visiting code URL back to the giver's home sanctuary, limited to the 10 most recent distinct visitors (wandering guests without a home show without a link). Residents discover gifts on their next load, since the app syncs on actions rather than polling.
+
+## 23. Minimal visitor bar (latest)
+
+A plain visitor (in a sanctuary, neither host nor guest) now sees only the highlighted New Sanctuary button in the bottom bar: Share, the ghost/lock button, the gift button, and the basket button are all hidden for them. Hosts and guests keep the full bar. This supersedes the earlier lock-button treatment for wisp-less visitors; becoming host still runs through the unlock gate on locked sanctuaries.
