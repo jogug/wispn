@@ -90,6 +90,11 @@ try:
     assert len(json.loads(b)) >= 2 and len({g["id"] for g in json.loads(b)}) == len(json.loads(b)), "multiple gifts by the same guest must all be kept with unique ids"
     assert all(g["ts"] > 0 for g in json.loads(b)), "gift dates must be saved"
     print("multiple gifts, unique ids, saved dates PASS")
+    for i in range(105): raw("POST", f"/api/s/{sid5}", {"action": "gift", "visitor_token": "flood-1", "gift": 1})
+    s, b, _ = raw("GET", f"/api/s/{sid5}/gifts")
+    assert len(json.loads(b)) == 100, "basket holds at most 100 gifts"
+    print("basket cap of 100 PASS")
+
 
 
 
