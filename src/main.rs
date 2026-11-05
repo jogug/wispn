@@ -6,7 +6,7 @@ use axum::{
     Json, Router,
 };
 use dashmap::DashMap;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
 use tower_http::services::{ServeDir, ServeFile};
 
@@ -18,7 +18,9 @@ impl SoulRecord {
     pub fn from_bytes(b: &[u8]) -> Option<Self> { if b.len() < 12 { return None; } Some(Self { visitor_id: u32::from_le_bytes(b[0..4].try_into().ok()?), appearance: b[4], item_and_hat: b[5], mime_seq: [b[6], b[7], b[8]], mime_tempo: b[9], host_react: b[10], padding: b[11] }) }
 }
 
-pub struct Sanctuary { pub last_active: u32, pub env_id: u8, pub host_ghost: [u8; 7], pub souls: VecDeque<SoulRecord>, pub colors: std::collections::HashMap<u32, [String; 2]>, pub password_hash: Option<String>, pub host_secret: Vec<u8>, pub host_vid: Option<u32> }
+pub struct Sanctuary { pub last_active: u32, pub env_id: u8, pub host_ghost: [u8; 7], pub souls: VecDeque<SoulRecord>, pub colors: std::collections::HashMap<u32, [String; 2]>, pub password_hash: Option<String>, pub host_secret: Vec<u8>, pub host_vid: Option<u32>, pub gifts: VecDeque<Gift> }
+#[derive(Clone, Serialize)]
+pub struct Gift { pub gift: u8, pub from: u32, pub home: String, pub ts: u32 }
 type Store = Arc<DashMap<u64, Sanctuary>>;
 #[derive(Clone)]
 pub struct App { pub store: Store, pub creators: Arc<DashMap<String, u64>>, pub ips: Arc<DashMap<String, u32>> }
@@ -66,7 +68,7 @@ async fn create_sanctuary(State(app): State<App>, ConnectInfo(addr): ConnectInfo
     if app.ips.get(&ip).map(|v| *v).unwrap_or(0) >= 30 { return (StatusCode::TOO_MANY_REQUESTS, empty, Json(serde_json::json!({"error":"too many sanctuaries from this network"}))); }
     let id = derive_id(&secret);
     let fresh = !app.store.contains_key(&id);
-    app.store.entry(id).or_insert_with(|| Sanctuary { last_active: now(), env_id: r.env_id.min(5), host_ghost: r.host_ghost, souls: VecDeque::new(), colors: Default::default(), password_hash: r.password.as_ref().map(|pw| blake3::hash(pw.as_bytes()).to_hex().to_string()), host_secret: secret.clone(), host_vid: None });
+    app.store.entry(id).or_insert_with(|| Sanctuary { last_active: now(), env_id: r.env_id.min(5), host_ghost: r.host_ghost, souls: VecDeque::new(), colors: Default::default(), password_hash: r.password.as_ref().map(|pw| blake3::hash(pw.as_bytes()).to_hex().to_string()), host_secret: secret.clone(), host_vid: None, gifts: VecDeque::new() });
     if let Some(mut s) = app.store.get_mut(&id) { s.last_active = now(); s.env_id = r.env_id.min(5); if r.host_ghost != [0; 7] { s.host_ghost = r.host_ghost; } if s.password_hash.is_none() { if let Some(pw) = &r.password { s.password_hash = Some(blake3::hash(pw.as_bytes()).to_hex().to_string()); } } }
     if fresh { *app.ips.entry(ip).or_insert(0) += 1; }
     let tok = cookie_token(&headers).unwrap_or_else(|| to_hex(&blake3::hash(&[secret.as_slice(), b"creator"].concat()).as_bytes()[0..16]));
@@ -90,7 +92,7 @@ async fn get_meta(State(app): State<App>, Path(id_hex): Path<String>) -> impl In
 }
 
 #[derive(Deserialize)]
-struct PostReq { action: String, #[serde(default)] visitor_token: String, #[serde(default)] appearance: u8, #[serde(default)] item_and_hat: u8, #[serde(default)] mime_seq: [u8; 3], #[serde(default = "default_tempo")] mime_tempo: u8, #[serde(default)] visitor_id: u32, #[serde(default)] hair: u8, #[serde(default)] body_color: String, #[serde(default)] hair_color: String, #[serde(default)] react: u8, #[serde(default)] env_id: Option<u8>, #[serde(default)] host_ghost: Option<[u8; 7]> }
+struct PostReq { action: String, #[serde(default)] visitor_token: String, #[serde(default)] appearance: u8, #[serde(default)] item_and_hat: u8, #[serde(default)] mime_seq: [u8; 3], #[serde(default = "default_tempo")] mime_tempo: u8, #[serde(default)] visitor_id: u32, #[serde(default)] hair: u8, #[serde(default)] body_color: String, #[serde(default)] hair_color: String, #[serde(default)] react: u8, #[serde(default)] env_id: Option<u8>, #[serde(default)] host_ghost: Option<[u8; 7]>, #[serde(default)] gift: u8, #[serde(default)] from_home: String }
 fn default_tempo() -> u8 { 1 }
 
 async fn post_sanctuary(State(app): State<App>, Path(id_hex): Path<String>, headers: HeaderMap, Json(r): Json<PostReq>) -> impl IntoResponse {
@@ -109,6 +111,16 @@ async fn post_sanctuary(State(app): State<App>, Path(id_hex): Path<String>, head
               if !bc.is_empty() || !hc.is_empty() { s.colors.insert(vid, [bc, hc]); } }
             s.last_active = now();
             (StatusCode::OK, Json(serde_json::json!({"ok":true,"visitor_id":vid,"count":s.souls.len()})))
+        }
+        "gift" => {
+            if !(1..=8).contains(&r.gift) { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"gift must be 1..8"}))); }
+            let Some(mut s) = app.store.get_mut(&id) else { return (StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"sanctuary not found"}))); };
+            let vid = if !r.visitor_token.is_empty() { visitor_id(r.visitor_token.as_bytes()) } else if r.visitor_id != 0 { r.visitor_id } else { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"visitor_token required"}))); };
+            let home = if r.from_home.len() == 16 && r.from_home.chars().all(|c| c.is_ascii_hexdigit()) { r.from_home.to_lowercase() } else { String::new() };
+            s.gifts.push_back(Gift { gift: r.gift, from: vid, home, ts: now() });
+            while s.gifts.len() > 100 { s.gifts.pop_front(); }
+            s.last_active = now();
+            (StatusCode::OK, Json(serde_json::json!({"ok":true,"count":s.gifts.len()})))
         }
         "react" => {
             if !is_host(&headers, id) { return (StatusCode::FORBIDDEN, Json(serde_json::json!({"error":"host only"}))); }
@@ -130,6 +142,11 @@ async fn post_sanctuary(State(app): State<App>, Path(id_hex): Path<String>, head
     }
 }
 
+async fn get_gifts(State(app): State<App>, Path(id_hex): Path<String>) -> impl IntoResponse {
+    let Ok(id) = u64::from_str_radix(&id_hex, 16) else { return (StatusCode::BAD_REQUEST, Json(serde_json::json!([]))); };
+    let Some(s) = app.store.get(&id) else { return (StatusCode::NOT_FOUND, Json(serde_json::json!([]))); };
+    (StatusCode::OK, Json(serde_json::to_value(&s.gifts).unwrap()))
+}
 async fn get_colors(State(app): State<App>, Path(id_hex): Path<String>) -> impl IntoResponse {
     let Ok(id) = u64::from_str_radix(&id_hex, 16) else { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({}))); };
     let Some(s) = app.store.get(&id) else { return (StatusCode::NOT_FOUND, Json(serde_json::json!({}))); };
@@ -150,6 +167,7 @@ async fn main() {
         .route("/api/s/:id", get(get_sanctuary).post(post_sanctuary))
         .route("/api/s/:id/colors", get(get_colors))
         .route("/api/s/:id/unlock", post(unlock_sanctuary))
+        .route("/api/s/:id/gifts", get(get_gifts))
         .route("/api/s/:id/meta", get(get_meta))
         .fallback_service(ServeDir::new("public").append_index_html_on_directories(true).fallback(ServeFile::new("public/index.html")))
         .with_state(app_state);

@@ -76,6 +76,15 @@ try:
     print("host soul replacement PASS")
     s, b, _ = raw("GET", f"/api/s/{sid5}/meta"); assert json.loads(b).get("host_vid"), "meta must expose host_vid so other browsers can find the host ghost"
     print("meta host_vid PASS")
+    # guests can leave gifts that residents fetch from the gifts endpoint
+    s, b, _ = raw("POST", f"/api/s/{sid5}", {"action": "gift", "visitor_token": "guest-1", "gift": 4, "from_home": "c7bbb7e2eaaded7a"})
+    assert s == 200, "guest gift must be accepted"
+    s, b, _ = raw("GET", f"/api/s/{sid5}/gifts")
+    gifts = json.loads(b); assert gifts and gifts[-1]["gift"] == 4 and gifts[-1]["home"] == "c7bbb7e2eaaded7a", "gift must be stored with the visitor home code"
+    s, b, _ = raw("POST", f"/api/s/{sid5}", {"action": "gift", "visitor_token": "guest-1", "gift": 9})
+    assert s == 400, "unknown gift must 400"
+    print("gift action and gifts endpoint PASS")
+
 
 
 
