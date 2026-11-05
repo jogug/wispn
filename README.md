@@ -39,7 +39,7 @@ Set `PORT` to change the port:
 PORT=8080 ./target/release/wispn
 ```
 
-The server keeps sanctuaries in memory. A restart wipes them. The host browser restores its own sanctuary from its stored secret. A password-locked sanctuary can be unlocked from any device with the password. Anyone else gets the link fresh from the host.
+The server saves sanctuaries to `wispn.db` after every change and reloads them at startup, so a restart keeps your souls, gifts, and password. Set `WISPN_DB` to move the file. The file holds host secrets, so do not share or commit it.
 
 ## Technical notes
 

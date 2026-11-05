@@ -7,7 +7,7 @@ use axum::{
 };
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
-use std::{collections::VecDeque, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
+use std::{collections::VecDeque, io::{Read, Write}, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
 use tower_http::services::{ServeDir, ServeFile};
 
 // SoulRecord wire layout, exactly 12 bytes per ghost.
@@ -24,6 +24,77 @@ pub struct Gift { pub id: u64, pub gift: u8, pub from: u32, pub home: String, pu
 type Store = Arc<DashMap<u64, Sanctuary>>;
 #[derive(Clone)]
 pub struct App { pub store: Store, pub creators: Arc<DashMap<String, u64>>, pub ips: Arc<DashMap<String, u32>> }
+fn db_path() -> String { std::env::var("WISPN_DB").unwrap_or_else(|_| "wispn.db".into()) }
+fn soul_from_wire(b: &[u8]) -> SoulRecord { SoulRecord::from_bytes(b).expect("12 byte soul") }
+fn put_str(out: &mut Vec<u8>, v: &str) { out.push(v.len() as u8); out.extend_from_slice(v.as_bytes()); }
+fn take_u8(b: &[u8], i: &mut usize) -> u8 { let v = b[*i]; *i += 1; v }
+fn take_u16(b: &[u8], i: &mut usize) -> u16 { let v = u16::from_le_bytes(b[*i..*i + 2].try_into().unwrap()); *i += 2; v }
+fn take_u32(b: &[u8], i: &mut usize) -> u32 { let v = u32::from_le_bytes(b[*i..*i + 4].try_into().unwrap()); *i += 4; v }
+fn take_u64(b: &[u8], i: &mut usize) -> u64 { let v = u64::from_le_bytes(b[*i..*i + 8].try_into().unwrap()); *i += 8; v }
+fn take_str(b: &[u8], i: &mut usize) -> String { let n = take_u8(b, i) as usize; let v = String::from_utf8_lossy(&b[*i..*i + n]).into_owned(); *i += n; v }
+fn snapshot(app: &App) -> Vec<u8> {
+    let mut out = Vec::new();
+    out.extend_from_slice(b"WSPN1");
+    let rows: Vec<(u64, u32, u8, [u8; 7], Vec<u8>, Option<String>, Option<u32>, Vec<SoulRecord>, Vec<(u32, [String; 2])>, Vec<Gift>, u64)> = app.store.iter().map(|e| { let s = e.value(); (*e.key(), s.last_active, s.env_id, s.host_ghost, s.host_secret.clone(), s.password_hash.clone(), s.host_vid, s.souls.iter().cloned().collect(), s.colors.iter().map(|(k, v)| (*k, v.clone())).collect(), s.gifts.iter().cloned().collect(), s.gift_seq) }).collect();
+    out.extend_from_slice(&(rows.len() as u32).to_le_bytes());
+    for (id, last_active, env_id, host_ghost, host_secret, password_hash, host_vid, souls, colors, gifts, gift_seq) in rows {
+        out.extend_from_slice(&id.to_le_bytes());
+        out.extend_from_slice(&last_active.to_le_bytes());
+        out.push(env_id);
+        out.extend_from_slice(&host_ghost);
+        put_str(&mut out, &to_hex(&host_secret));
+        match &password_hash { Some(h) => { out.push(1); put_str(&mut out, h); } None => out.push(0) }
+        out.extend_from_slice(&host_vid.unwrap_or(u32::MAX).to_le_bytes());
+        out.extend_from_slice(&(souls.len() as u16).to_le_bytes());
+        for soul in &souls { out.extend_from_slice(&soul.to_bytes()); }
+        out.extend_from_slice(&(colors.len() as u16).to_le_bytes());
+        for (vid, pair) in &colors { out.extend_from_slice(&vid.to_le_bytes()); put_str(&mut out, &pair[0]); put_str(&mut out, &pair[1]); }
+        out.extend_from_slice(&(gifts.len() as u16).to_le_bytes());
+        for g in &gifts { out.extend_from_slice(&g.id.to_le_bytes()); out.push(g.gift); out.extend_from_slice(&g.from.to_le_bytes()); out.extend_from_slice(&g.ts.to_le_bytes()); put_str(&mut out, &g.home); }
+        out.extend_from_slice(&gift_seq.to_le_bytes());
+    }
+    let creators: Vec<(String, u64)> = app.creators.iter().map(|e| (e.key().clone(), *e.value())).collect();
+    out.extend_from_slice(&(creators.len() as u32).to_le_bytes());
+    for (tok, id) in creators { put_str(&mut out, &tok); out.extend_from_slice(&id.to_le_bytes()); }
+    out
+}
+fn persist(app: &App) {
+    let raw = snapshot(app);
+    let mut enc = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::fast());
+    if enc.write_all(&raw).is_err() { return; }
+    let Ok(bytes) = enc.finish() else { return; };
+    let path = db_path();
+    let tmp = format!("{path}.tmp");
+    if std::fs::write(&tmp, &bytes).is_ok() { let _ = std::fs::rename(&tmp, &path); }
+}
+fn restore(app: &App) {
+    let Ok(bytes) = std::fs::read(db_path()) else { return; };
+    let mut raw = Vec::new();
+    if flate2::read::ZlibDecoder::new(&bytes[..]).read_to_end(&mut raw).is_err() || raw.len() < 9 || &raw[0..5] != b"WSPN1" { return; }
+    let mut i = 5usize;
+    let count = take_u32(&raw, &mut i);
+    for _ in 0..count {
+        let id = take_u64(&raw, &mut i);
+        let last_active = take_u32(&raw, &mut i);
+        let env_id = take_u8(&raw, &mut i);
+        let mut host_ghost = [0u8; 7]; host_ghost.copy_from_slice(&raw[i..i + 7]); i += 7;
+        let host_secret = parse_hex(&take_str(&raw, &mut i)).unwrap_or_default();
+        let password_hash = if take_u8(&raw, &mut i) == 1 { Some(take_str(&raw, &mut i)) } else { None };
+        let hv = take_u32(&raw, &mut i); let host_vid = if hv == u32::MAX { None } else { Some(hv) };
+        let ns = take_u16(&raw, &mut i) as usize;
+        let mut souls = VecDeque::new();
+        for _ in 0..ns { souls.push_back(soul_from_wire(&raw[i..i + 12])); i += 12; }
+        let nc = take_u16(&raw, &mut i) as usize;
+        let mut colors = std::collections::HashMap::new();
+        for _ in 0..nc { let vid = take_u32(&raw, &mut i); let a = take_str(&raw, &mut i); let b = take_str(&raw, &mut i); colors.insert(vid, [a, b]); }
+        let ng = take_u16(&raw, &mut i) as usize;
+        let mut gifts = VecDeque::new();
+        for _ in 0..ng { let gid = take_u64(&raw, &mut i); let gift = take_u8(&raw, &mut i); let from = take_u32(&raw, &mut i); let ts = take_u32(&raw, &mut i); let home = take_str(&raw, &mut i); gifts.push_back(Gift { id: gid, gift, from, home, ts }); }
+        let gift_seq = take_u64(&raw, &mut i);
+        app.store.insert(id, Sanctuary { last_active, env_id, host_ghost, souls, colors, password_hash, host_secret, host_vid, gifts, gift_seq });
+    }
+    if i + 4 <= raw.len() { let nc = take_u32(&raw, &mut i); for _ in 0..nc { let tok = take_str(&raw, &mut i); let id = take_u64(&raw, &mut i); app.creators.insert(tok, id); } }
+}
 fn to_hex(b: &[u8]) -> String { b.iter().map(|x| format!("{x:02x}")).collect() }
 fn cookie_token(headers: &HeaderMap) -> Option<String> { headers.get(header::COOKIE)?.to_str().ok()?.split(';').map(|c| c.trim()).find(|c| c.starts_with("wispn_creator=")).map(|c| c[14..].to_string()).filter(|t| !t.is_empty()) }
 fn now() -> u32 { SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as u32 }
@@ -74,6 +145,7 @@ async fn create_sanctuary(State(app): State<App>, ConnectInfo(addr): ConnectInfo
     let tok = cookie_token(&headers).unwrap_or_else(|| to_hex(&blake3::hash(&[secret.as_slice(), b"creator"].concat()).as_bytes()[0..16]));
     app.creators.insert(tok.clone(), id);
     let mut hm = HeaderMap::new(); hm.insert(header::SET_COOKIE, format!("wispn_creator={tok}; Path=/; Max-Age=31536000; SameSite=Lax").parse().unwrap());
+    persist(&app);
     (StatusCode::OK, hm, Json(serde_json::json!({"id": format!("{id:016x}"), "id_u64": id.to_string()})))
 }
 #[derive(Deserialize)]
@@ -110,7 +182,8 @@ async fn post_sanctuary(State(app): State<App>, Path(id_hex): Path<String>, head
               let hc = if valid_hex(&r.hair_color) { r.hair_color.clone() } else { String::new() };
               if !bc.is_empty() || !hc.is_empty() { s.colors.insert(vid, [bc, hc]); } }
             s.last_active = now();
-            (StatusCode::OK, Json(serde_json::json!({"ok":true,"visitor_id":vid,"count":s.souls.len()})))
+            let count = s.souls.len(); drop(s); persist(&app);
+            (StatusCode::OK, Json(serde_json::json!({"ok":true,"visitor_id":vid,"count":count})))
         }
         "gift" => {
             if !(1..=8).contains(&r.gift) { return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"gift must be 1..8"}))); }
@@ -121,7 +194,8 @@ async fn post_sanctuary(State(app): State<App>, Path(id_hex): Path<String>, head
             s.gifts.push_back(Gift { id: gid, gift: r.gift, from: vid, home, ts: now() });
             while s.gifts.len() > 100 { s.gifts.pop_front(); }
             s.last_active = now();
-            (StatusCode::OK, Json(serde_json::json!({"ok":true,"count":s.gifts.len()})))
+            let count = s.gifts.len(); drop(s); persist(&app);
+            (StatusCode::OK, Json(serde_json::json!({"ok":true,"count":count})))
         }
         "react" => {
             if !is_host(&headers, id) { return (StatusCode::FORBIDDEN, Json(serde_json::json!({"error":"host only"}))); }
@@ -129,6 +203,7 @@ async fn post_sanctuary(State(app): State<App>, Path(id_hex): Path<String>, head
             let Some(mut s) = app.store.get_mut(&id) else { return (StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"sanctuary not found"}))); };
             let Some(soul) = s.souls.iter_mut().find(|x| x.visitor_id == r.visitor_id) else { return (StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"soul not found"}))); };
             soul.host_react = r.react; s.last_active = now();
+            drop(s); persist(&app);
             (StatusCode::OK, Json(serde_json::json!({"ok":true})))
         }
         "host_update" => {
@@ -137,6 +212,7 @@ async fn post_sanctuary(State(app): State<App>, Path(id_hex): Path<String>, head
             if let Some(e) = r.env_id { s.env_id = e.min(5); }
             if let Some(h) = r.host_ghost { s.host_ghost = h; }
             s.last_active = now();
+            drop(s); persist(&app);
             (StatusCode::OK, Json(serde_json::json!({"ok":true})))
         }
         _ => (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"unknown action"}))),
@@ -160,6 +236,8 @@ async fn health() -> impl IntoResponse { (StatusCode::OK, [(header::CONTENT_TYPE
 async fn main() {
     let store: Store = Arc::new(DashMap::new());
     let app_state = App { store: store.clone(), creators: Arc::new(DashMap::new()), ips: Arc::new(DashMap::new()) };
+    restore(&app_state);
+    println!("wispn: restored {} sanctuaries from {}", app_state.store.len(), db_path());
     let cleanup = store.clone();
     tokio::spawn(async move { let mut t = tokio::time::interval(std::time::Duration::from_secs(3600)); loop { t.tick().await; let cutoff = now().saturating_sub(30 * 24 * 3600); cleanup.retain(|_, s: &mut Sanctuary| s.last_active > cutoff); } });
     let app = Router::new()

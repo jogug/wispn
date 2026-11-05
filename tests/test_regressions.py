@@ -3,7 +3,9 @@ Run after `cargo build --release`: python3 tests/test_regressions.py"""
 import subprocess, time, json, urllib.request, os, pathlib
 urllib.request.install_opener(urllib.request.build_opener(urllib.request.ProxyHandler({})))
 root = pathlib.Path(__file__).parent.parent
-env = dict(os.environ, PORT="3111")
+env = dict(os.environ, PORT="3111", WISPN_DB="/tmp/wispn_test.db")
+try: os.remove("/tmp/wispn_test.db")
+except FileNotFoundError: pass
 proc = subprocess.Popen(["./target/release/wispn"], cwd=root, env=env, stdout=subprocess.PIPE, text=True)
 def req(m, path, body=None, headers=None):
     r = urllib.request.Request("http://127.0.0.1:3111" + path, method=m,
@@ -94,6 +96,23 @@ try:
     s, b, _ = raw("GET", f"/api/s/{sid5}/gifts")
     assert len(json.loads(b)) == 100, "basket holds at most 100 gifts"
     print("basket cap of 100 PASS")
+    # sanctuaries survive a server restart through the compressed file store
+    import pathlib as _pl
+    assert _pl.Path("/tmp/wispn_test.db").exists(), "file store must be written"
+    proc.terminate(); proc.wait(timeout=5)
+    proc = subprocess.Popen(["./target/release/wispn"], cwd=root, env=env, stdout=subprocess.PIPE, text=True)
+    for _ in range(40):
+        try:
+            if req("GET", "/health")[0] == 200: break
+        except Exception: time.sleep(.2)
+    s, b = req("GET", f"/api/s/{sid5}")
+    assert s == 200 and b[1] >= 2, "souls must survive a restart"
+    s, b, _ = raw("POST", f"/api/s/{sid5}/unlock", {"password": "host-pass-5"})
+    assert s == 200, "password unlock must survive a restart"
+    s, b, _ = raw("GET", f"/api/s/{sid5}/gifts")
+    assert len(json.loads(b)) == 100, "gifts must survive a restart"
+    print("file store restart persistence PASS")
+
 
 
 
