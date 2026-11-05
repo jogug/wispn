@@ -84,6 +84,13 @@ try:
     s, b, _ = raw("POST", f"/api/s/{sid5}", {"action": "gift", "visitor_token": "guest-1", "gift": 9})
     assert s == 400, "unknown gift must 400"
     print("gift action and gifts endpoint PASS")
+    s, b, _ = raw("POST", f"/api/s/{sid5}", {"action": "gift", "visitor_token": "guest-1", "gift": 4})
+    s, b, _ = raw("GET", f"/api/s/{sid5}/gifts")
+    mine = [g for g in json.loads(b) if g["from"]]
+    assert len(json.loads(b)) >= 2 and len({g["id"] for g in json.loads(b)}) == len(json.loads(b)), "multiple gifts by the same guest must all be kept with unique ids"
+    assert all(g["ts"] > 0 for g in json.loads(b)), "gift dates must be saved"
+    print("multiple gifts, unique ids, saved dates PASS")
+
 
 
 

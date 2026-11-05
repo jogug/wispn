@@ -356,3 +356,7 @@ The minimal visitor bar (only the highlighted New Sanctuary button) now also app
 ## 25. Go home button for returning visitors (latest)
 
 A visitor who has previously logged in to a sanctuary of their own (a known home in this browser) now gets a wordless Go Home house button instead of the New Sanctuary button, in someone else's sanctuary and on the empty root URL alike. Clicking it jumps straight back to their sanctuary. Visitors with no known home keep the single highlighted New Sanctuary button; hosts keep the visit-window button.
+
+## 26. Multiple gifts, random placement, dates, rendered basket (latest)
+
+A guest can leave many gifts: every gift is stored with its own sequential ID and timestamp, and rapid repeats no longer collide in the seen-set. Unseen gifts are placed at random positions across the scene instead of a fixed row. The basket is now rendered as a basket: the generated wicker basket art fills with the latest gift sprites piled inside, and below it each of the 10 most recent visitors shows all of their gifts as chips stamped with the saved date, plus their visiting-code URL.
