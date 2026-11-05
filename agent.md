@@ -352,3 +352,7 @@ A plain visitor (in a sanctuary, neither host nor guest) now sees only the highl
 ## 24. Minimal bar everywhere for visitors, toasts top right (latest)
 
 The minimal visitor bar (only the highlighted New Sanctuary button) now also applies on the empty root URL and on dead sanctuary links, where the visibility rules previously never ran. Plain visitors get the New Sanctuary button in every state; hosts and guests keep their full bars. Notifications moved from bottom centre to the top right corner, below the safe-area inset.
+
+## 25. Go home button for returning visitors (latest)
+
+A visitor who has previously logged in to a sanctuary of their own (a known home in this browser) now gets a wordless Go Home house button instead of the New Sanctuary button, in someone else's sanctuary and on the empty root URL alike. Clicking it jumps straight back to their sanctuary. Visitors with no known home keep the single highlighted New Sanctuary button; hosts keep the visit-window button.

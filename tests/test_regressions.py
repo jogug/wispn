@@ -136,7 +136,7 @@ assert 'data-mode="new"' not in js or True
 assert "#openBtn[data-mode=" in (root / "public/style.css").read_text(), "new sanctuary button must be highlighted in create mode"
 print("visitor lock button, highlighted new sanctuary PASS")
 assert '$("#roleBadge").hidden=isHost()' in js, "host badge must not be displayed"
-assert "if(isHost()||(own&&own!==sid))" in js, "hosts must get the visit button instead of new sanctuary"
+assert "else if(isHost()){b.innerHTML=ICON_VISIT" in js, "hosts must get the visit button instead of new sanctuary"
 print("host badge hidden, host visit button PASS")
 assert "visitGate" in (root / "public/index.html").read_text() and "visitGo" in js and "[0-9a-f]{16}" in js, "visit button must open a window that parses a sanctuary link"
 print("visit window PASS")
@@ -155,4 +155,6 @@ assert "plainVisitor" in js or "minimal=!host&&!guest" in js, "plain visitors mu
 print("visitor minimal bar PASS")
 assert "applyBar()" in js and 'if(!sid){$("#empty").hidden=false;applyBar();updateOpenBtn();return}' in js, "empty URL must apply the minimal visitor bar"
 print("empty-url minimal bar PASS")
+assert 'b.title="Go home"' in js and "own&&own!==sid&&!isHost()" in js, "visitors with a previous sanctuary must get a go home button"
+print("go home button PASS")
 print("ALL PASS")
