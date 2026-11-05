@@ -173,4 +173,6 @@ man2 = json.loads((root / "public/assets/manifest.json").read_text())
 assert len(man2["hats"]) == 15 and len(man2["items"]) == 10, "more hats and held items must be in the manifest"
 assert "Rainbow Swirl" in js and "(s.appearance&15)%15" in js, "new eye styles must be reachable"
 print("more hats, eyes, items PASS")
+assert "EYE_NAMES.map" in js, "eye images must load for every style in EYE_NAMES"
+print("eye loader count PASS")
 print("ALL PASS")

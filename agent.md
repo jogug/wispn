@@ -364,3 +364,5 @@ A guest can leave many gifts: every gift is stored with its own sequential ID an
 ## 27. More hats, eyes, held items (latest)
 
 Five more hats (beanie, sailor, pumpkin, frog, party) bring the closet to 15; the hat slot now uses the full nibble. Five new eye styles (Sad, Cute, Anime, Angry, Rainbow Swirl, hand-authored SVGs matching the existing eye format) bring eyes to 15. Five more held items (lantern, story book, umbrella, balloon, teapot) bring held items to 10, each with its own glow colour. All were verified live on summoned wisps.
+
+Bug fix: the five new eye styles never appeared on wisps. The eye image loader still listed only the original ten files, so styles 10-14 had no image and the face texture drew without eyes (the Limbo cards, which load the SVGs directly, looked fine). The loader now follows EYE_NAMES, all 15 eye images load, and a regression pins it.
