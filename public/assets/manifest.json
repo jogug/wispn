@@ -45,6 +45,36 @@
       "pivotY": 50,
       "dangles": true,
       "glowColor": "#fbbf24"
+    },
+    {
+      "file": "assets/ghost/items/5.png",
+      "pivotX": 50,
+      "pivotY": 70,
+      "glowColor": "#fde68a"
+    },
+    {
+      "file": "assets/ghost/items/6.png",
+      "pivotX": 50,
+      "pivotY": 70,
+      "glowColor": "#fbbf24"
+    },
+    {
+      "file": "assets/ghost/items/7.png",
+      "pivotX": 50,
+      "pivotY": 70,
+      "glowColor": "#f87171"
+    },
+    {
+      "file": "assets/ghost/items/8.png",
+      "pivotX": 50,
+      "pivotY": 70,
+      "glowColor": "#ef4444"
+    },
+    {
+      "file": "assets/ghost/items/9.png",
+      "pivotX": 50,
+      "pivotY": 70,
+      "glowColor": "#f59e0b"
     }
   ],
   "hats": [
@@ -95,6 +125,31 @@
     },
     {
       "file": "assets/ghost/hats/9.png",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/10.png",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/11.png",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/12.png",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/13.png",
+      "pivotX": 50,
+      "pivotY": 78
+    },
+    {
+      "file": "assets/ghost/hats/14.png",
       "pivotX": 50,
       "pivotY": 78
     }

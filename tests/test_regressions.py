@@ -159,7 +159,7 @@ assert "faceTexCache=new Map()" in js or "faceTexCache = new Map()" in js or "ne
 assert "ICON_HOME" in js and 'mode="home"' in js.replace("dataset.mode=","mode="), "guests must get a return-home button"
 assert "loadBusy" in js, "concurrent loads must be serialised"
 print("accessories persist, face cache, guest home, load dedupe PASS")
-assert "pp.souls.find" in js and "CUST.item=(mine.item_and_hat>>4)%6" in js, "guest join must copy accessories from the home ghost"
+assert "pp.souls.find" in js and "CUST.item=(mine.item_and_hat>>4)%11" in js, "guest join must copy accessories from the home ghost"
 print("guest accessories from home ghost PASS")
 assert "fromHome" in js and "Your ghost was refreshed" in js, "guest accessories must refresh however the guest arrives"
 print("arrival-independent guest sync PASS")
@@ -169,4 +169,8 @@ assert "applyBar()" in js and 'if(!sid){$("#empty").hidden=false;applyBar();upda
 print("empty-url minimal bar PASS")
 assert 'b.title="Go home"' in js and "own&&own!==sid&&!isHost()" in js, "visitors with a previous sanctuary must get a go home button"
 print("go home button PASS")
+man2 = json.loads((root / "public/assets/manifest.json").read_text())
+assert len(man2["hats"]) == 15 and len(man2["items"]) == 10, "more hats and held items must be in the manifest"
+assert "Rainbow Swirl" in js and "(s.appearance&15)%15" in js, "new eye styles must be reachable"
+print("more hats, eyes, items PASS")
 print("ALL PASS")

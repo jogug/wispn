@@ -360,3 +360,7 @@ A visitor who has previously logged in to a sanctuary of their own (a known home
 ## 26. Multiple gifts, random placement, dates, rendered basket (latest)
 
 A guest can leave many gifts: every gift is stored with its own sequential ID and timestamp, and rapid repeats no longer collide in the seen-set. Unseen gifts are placed at random positions across the scene instead of a fixed row. The basket is now rendered as a basket: the generated wicker basket art fills with the latest gift sprites piled inside, and below it each of the 10 most recent visitors shows all of their gifts as chips stamped with the saved date, plus their visiting-code URL.
+
+## 27. More hats, eyes, held items (latest)
+
+Five more hats (beanie, sailor, pumpkin, frog, party) bring the closet to 15; the hat slot now uses the full nibble. Five new eye styles (Sad, Cute, Anime, Angry, Rainbow Swirl, hand-authored SVGs matching the existing eye format) bring eyes to 15. Five more held items (lantern, story book, umbrella, balloon, teapot) bring held items to 10, each with its own glow colour. All were verified live on summoned wisps.
