@@ -1,8 +1,16 @@
 # wispn (Pantom)
 
+## Start here: a bio link that answers back
+
+Put a wispn sanctuary link in your social media bio, and the link stops being a list. It becomes a small haunted room that your followers can walk into.
+
+Anyone who taps the link lands in your sanctuary. No account, no install, no form. They watch your wisps drift between painted biomes. If they have a sanctuary of their own, their ghost arrives dressed as them. They can leave you a gift, from a cake to a dirty sock, and your basket keeps the gift, its date, and a link back to their sanctuary. Your next visitor can follow that link and leave a gift in return. Visits turn into a loop instead of a counter.
+
+That is the engagement offer. A static bio link asks for a tap. A sanctuary gives the tap somewhere to go, something to touch, and a reason to come back tomorrow to see who else showed up.
+
 ## What it is
 
-wispn is an anonymous ghost sanctuary that runs in the browser. You open a sanctuary, pick one of six painted biomes, and share the link. Anyone who opens the link can watch the wisps. Guests arrive as ghosts of their own, with the look they saved at home.
+wispn is an anonymous ghost sanctuary that runs in the browser. You open a sanctuary, pick one of six painted biomes, and share the link. Guests arrive as ghosts of their own, with the look they saved at home.
 
 Nobody signs up. The app has no accounts. A sanctuary holds the last 100 souls, each 12 bytes on the wire, and the server saves them to a small compressed file so they survive restarts.
 
@@ -15,12 +23,6 @@ Nobody signs up. The app has no accounts. A sanctuary holds the last 100 souls, 
 * Leave gifts as a guest, as many as you like. Fly agaric, cake, carrot, broccoli, a dirty sock, a bouquet, cheese, or honey. Gifts land at random spots. A resident wisp flies over, stays until it has picked the gift up in its second hand, and carries it into the basket, one gift at a time.
 * Open the gift basket to see who visited. It shows the gifts of the 10 most recent visitors, the date of each gift, and a link back to each visitor's sanctuary. The basket holds at most 100 gifts.
 * Watch the wisps between visits. Idle wisps fly off to inspect the biome and each other, then drift home.
-
-## How it extends a social profile
-
-Put your sanctuary link where your bio link goes. A normal bio link is a static list of links. A sanctuary link is a small room that changes while people watch.
-
-Visitors do not need an account, so the link works for followers on any platform. Each guest arrives as a dressed ghost, so a busy sanctuary shows real visits instead of a view counter. Gifts make the visit stick: a guest leaves something behind, and the basket keeps their gift, its date, and a link back to their own sanctuary. That backlink turns one-way traffic into a loop, because your visitors can follow it and leave a gift in return.
 
 ## Running
 
