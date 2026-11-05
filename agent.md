@@ -348,3 +348,7 @@ A wordless basket button opens the gift basket: each entry shows the gift sprite
 ## 23. Minimal visitor bar (latest)
 
 A plain visitor (in a sanctuary, neither host nor guest) now sees only the highlighted New Sanctuary button in the bottom bar: Share, the ghost/lock button, the gift button, and the basket button are all hidden for them. Hosts and guests keep the full bar. This supersedes the earlier lock-button treatment for wisp-less visitors; becoming host still runs through the unlock gate on locked sanctuaries.
+
+## 24. Minimal bar everywhere for visitors, toasts top right (latest)
+
+The minimal visitor bar (only the highlighted New Sanctuary button) now also applies on the empty root URL and on dead sanctuary links, where the visibility rules previously never ran. Plain visitors get the New Sanctuary button in every state; hosts and guests keep their full bars. Notifications moved from bottom centre to the top right corner, below the safe-area inset.

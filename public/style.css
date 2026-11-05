@@ -174,3 +174,6 @@ input[type=range]{min-height:48px;accent-color:#f0a832}
 .basketRow img{width:40px;height:40px;object-fit:contain;flex:0 0 auto}
 .basketRow a{color:#f5c451;word-break:break-all}
 #bottomBar button[hidden]{display:none}
+/* Toasts live in the top right corner */
+#toast{top:calc(.8rem + env(safe-area-inset-top));right:.8rem;left:auto;bottom:auto;transform:none;text-align:left}
+#toast.show{transform:none}
